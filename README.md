@@ -37,3 +37,21 @@
 - 워커 로드/메시지 왕복(OffscreenCanvas, createImageBitmap, pako CDN)
 - 다양한 DPI·색상 모드에서 보정 결과/용량
 - 대용량(수십 페이지) 문서에서 반응성·메모리
+
+## 다국어 / 검색 노출 (v4.1)
+파일 구조:
+- `index.html` — 한국어 랜딩 + 도구 (루트 `/`)
+- `en/index.html` — 영문 랜딩 + 도구 (`/en/`)
+- `styles.css` `app.js` `correction-worker.js` — 두 언어 공유 (절대경로 `/...`로 로드)
+
+각 페이지에 포함된 것: SEO 제목·메타설명, hreflang(ko/en/x-default), canonical,
+OpenGraph/Twitter 카드, 소개·사용법·FAQ 본문(정적), JSON-LD(WebApplication + FAQPage).
+
+### 배포 전 반드시 할 일
+1. 두 HTML의 `YOUR-DOMAIN.example`을 실제 도메인으로 일괄 치환
+   (canonical, hreflang, og:url 들)
+2. 네이버 웹마스터도구 + 구글 서치콘솔에 사이트 등록, 사이트맵 제출
+3. (권장) `og:image` 대표 이미지 추가
+
+> 자산을 절대경로(`/app.js` 등)로 두었으므로 **루트 도메인 서빙**을 전제로 합니다.
+> 서브경로에 올릴 경우 경로를 상대경로로 바꿔야 합니다.

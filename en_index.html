@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merge Double-Sided Scanned PDFs & Compress PDF — Free, In-Browser</title>
+<meta name="description" content="Merge front/back PDFs scanned separately on a single-sided scanner, combine multiple PDFs, and shrink heavy scans. Files never leave your browser. Free, no signup.">
+<link rel="canonical" href="https://pdf.dumpit.dev/en/">
+<link rel="alternate" hreflang="ko" href="https://pdf.dumpit.dev/">
+<link rel="alternate" hreflang="en" href="https://pdf.dumpit.dev/en/">
+<link rel="alternate" hreflang="x-default" href="https://pdf.dumpit.dev/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Merge Double-Sided Scanned PDFs & Compress PDF — Free, In-Browser">
+<meta property="og:description" content="Merge front/back PDFs scanned separately on a single-sided scanner, combine multiple PDFs, and shrink heavy scans. Files never leave your browser. Free, no signup.">
+<meta property="og:url" content="https://pdf.dumpit.dev/en/">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Merge Double-Sided Scanned PDFs & Compress PDF — Free, In-Browser">
+<meta name="twitter:description" content="Merge front/back PDFs scanned separately on a single-sided scanner, combine multiple PDFs, and shrink heavy scans. Files never leave your browser. Free, no signup.">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Merge & Compress Scanned PDFs","description":"Merge double-sided scanned PDFs, combine multiple PDFs in order, and compress scanned PDFs. All processing in the browser.","applicationCategory":"UtilitiesApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"How do I merge a double-sided document from a one-sided scanner?","acceptedAnswer":{"@type":"Answer","text":"Scan the fronts into one PDF and the backs into another, then upload both to re-interleave them into the correct order."}},
+{"@type":"Question","name":"Are my files uploaded to a server?","acceptedAnswer":{"@type":"Answer","text":"No. All processing happens inside your browser; your PDF is never sent to any server."}},
+{"@type":"Question","name":"Is it free? Do I need an account?","acceptedAnswer":{"@type":"Answer","text":"It is completely free with no install and no signup."}},
+{"@type":"Question","name":"How much smaller will my PDF get?","acceptedAnswer":{"@type":"Answer","text":"It depends on the scan and settings, but scanned PDFs usually drop to about half their size."}},
+{"@type":"Question","name":"Will compressing hurt quality?","acceptedAnswer":{"@type":"Answer","text":"Auto mode keeps color and shading while reducing size. Black-and-white mode keeps only text."}}
+]}
+</script>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="lang-switch"><a href="index.html">한국어</a> · <a href="en_index.html" class="active">English</a></div>
+    <div class="tag">Precision · On-device</div>
+    <h1>Merge &amp; <span>Compress Scanned PDFs</span></h1>
+    <p class="intro">Scanned the front and back pages separately on a single-sided scanner? <strong>Re-interleave them into the right order</strong>, combine several PDFs into one, and <strong>shrink heavy scans</strong>. Everything runs in your browser — files are never uploaded. Free, no install, no signup.</p>
+    <div class="priv-banner">🔒 Everything runs entirely in your browser. Your PDFs are never sent to any server.</div>
+  </div>
+
+<div class="tabs">
+    <button class="tab-btn active" id="tabBtnA" onclick="switchTab('a')">⇄&nbsp; Two-sided merge</button>
+    <button class="tab-btn" id="tabBtnB" onclick="switchTab('b')">＋&nbsp; Merge in order</button>
+    <button class="tab-btn" id="tabBtnC" onclick="switchTab('c')">🗜&nbsp; Compress</button>
+  </div>
+
+  <!-- ══════════════════════════════
+       Shared scan-correction panel
+  ══════════════════════════════ -->
+  <div class="corr-panel">
+    <label class="corr-head">
+      <span class="option-item" style="gap:8px">
+        <input type="checkbox" id="corrToggle">
+        <span class="check-box"></span>
+        <span class="corr-head-title">🛠 Scan cleanup (all tabs)</span>
+      </span>
+      <span class="option-sub">Off = merge originals as-is</span>
+    </label>
+
+    <div class="corr-body" id="corrBody">
+      <div class="corr-group">
+        <div class="corr-group-label">Color mode</div>
+        <div class="options-row">
+          <label class="option-item"><input type="radio" name="corrColor" value="auto" checked><div class="radio-box"></div><div><div class="option-label">Auto</div><div class="option-sub">Keep color if present</div></div></label>
+          <label class="option-item"><input type="radio" name="corrColor" value="bw"><div class="radio-box"></div><div><div class="option-label">B&amp;W</div><div class="option-sub">Text · smallest size</div></div></label>
+          <label class="option-item"><input type="radio" name="corrColor" value="gray"><div class="radio-box"></div><div><div class="option-label">Grayscale</div><div class="option-sub">Keeps shading</div></div></label>
+          <label class="option-item"><input type="radio" name="corrColor" value="color"><div class="radio-box"></div><div><div class="option-label">Color</div><div class="option-sub">Full color</div></div></label>
+        </div>
+        <div class="corr-note" id="corrColorNote">⚠ B&W keeps only text for the smallest file, but charts and shading disappear. Auto and grayscale keep shading, but colors (stamps, highlighter) turn gray.</div>
+      </div>
+
+      <div class="corr-group">
+        <div class="corr-group-label">Adjustments</div>
+        <div class="options-row">
+          <label class="option-item"><input type="checkbox" id="corrDeskew" checked><div class="check-box"></div><div><div class="option-label">Auto-deskew</div><div class="option-sub">Re-checks to avoid over-correction</div></div></label>
+          <label class="option-item"><input type="checkbox" id="corrEnhance" checked><div class="check-box"></div><div><div class="option-label">Sharpen</div><div class="option-sub">Contrast boost for color/gray</div></div></label>
+          <label class="option-item"><input type="checkbox" id="corrOptimize" checked><div class="check-box"></div><div><div class="option-label">Optimize size</div><div class="option-sub">Downscale to print resolution</div></div></label>
+        </div>
+        <div class="corr-sub open" id="corrOptSub">
+          <div class="corr-field"><span>Resolution</span>
+            <select class="opt-select" id="corrDpi"><option value="150">150 DPI · Draft</option><option value="200" selected>200 DPI · Normal</option><option value="300">300 DPI · High</option></select>
+          </div>
+          <div class="corr-field"><span>Quality</span>
+            <input type="range" class="opt-range" id="corrQuality" min="40" max="95" value="70"><span class="corr-qval" id="corrQualityVal">70</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       TAB A — Interleave
+  ══════════════════════════════ -->
+  <div class="tab-content active" id="tabA">
+
+    <div class="tab-section-header">
+      <div class="tab-section-title">Upload files</div>
+      <button class="btn-reset" id="btnILReset">↺ Reset</button>
+    </div>
+
+    <div class="scan-guide">
+      <div class="sg-head">How to scan</div>
+      <div class="sg-steps">
+        <div class="sg-step">
+          <div class="sg-n">1</div>
+          <div><div class="sg-t">Scan fronts in order</div><div class="sg-d">Scan every front side from page 1 onward and save as one PDF.</div></div>
+        </div>
+        <div class="sg-step">
+          <div class="sg-n">2</div>
+          <div><div class="sg-t">Flip the whole stack</div><div class="sg-d"><b>Without reordering</b>, flip the entire stack over and scan the back sides.</div></div>
+        </div>
+        <div class="sg-step">
+          <div class="sg-n">3</div>
+          <div><div class="sg-t">Merge in reverse</div><div class="sg-d">Flipping scans the backs in reverse. Turn on <span class="sg-flip">Reverse</span> below to restore 1·2·3·4… order.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="options-panel order-panel">
+      <div class="order-left">
+        <div class="options-title">Back-side scan order</div>
+        <div class="options-col">
+          <label class="option-item"><input type="radio" name="ilOrder" value="normal" checked><div class="radio-box"></div><div><div class="option-label">Forward</div><div class="option-sub">Backs scanned in order</div></div></label>
+          <label class="option-item"><input type="radio" name="ilOrder" value="reverse"><div class="radio-box"></div><div><div class="option-label">Reverse (flipped)</div><div class="option-sub">Backs scanned flipped</div></div></label>
+        </div>
+      </div>
+      <div class="merge-viz" id="ilChipBox">
+        <div class="mv-head">
+          <div class="mv-title">Recombination preview</div>
+          <div class="mv-sub" id="mvSub">Example — 3 fronts · 3 backs</div>
+        </div>
+        <div class="mv-sources" id="ilChips"></div>
+      </div>
+    </div>
+
+    <div class="interleave-grid">
+      <div class="il-col">
+        <div class="upload-zone odd" id="zoneOdd">
+          <input type="file" accept=".pdf" id="fileOdd">
+          <div class="zone-icon">📄</div>
+          <div class="zone-lbl odd">Front scan</div>
+          <div class="zone-title" id="oddZoneTitle">1 · 3 · 5 · …</div>
+          <div class="zone-hint">PDF of fronts only</div>
+          <div class="zone-meta" id="nameOdd"></div>
+        </div>
+        <div class="zone-thumbs" id="oddThumbs"></div>
+      </div>
+      <div class="il-col">
+        <div class="upload-zone even" id="zoneEven">
+          <input type="file" accept=".pdf" id="fileEven">
+          <div class="zone-icon">📄</div>
+          <div class="zone-lbl even">Back scan</div>
+          <div class="zone-title" id="evenZoneTitle">2 · 4 · 6 · …</div>
+          <div class="zone-hint">PDF of backs only</div>
+          <div class="zone-meta" id="nameEven"></div>
+        </div>
+        <div class="zone-thumbs" id="evenThumbs"></div>
+      </div>
+    </div>
+
+    <div class="merged-preview" id="ilMergedPreview">
+      <div class="mp-head">
+        <div class="mv-title">Merged preview <span class="mp-note" id="ilMergedNote"></span></div>
+        <div class="mp-legend"><span class="mp-key"><span class="mp-dot odd"></span>Front</span><span class="mp-key"><span class="mp-dot even"></span>Back</span></div>
+      </div>
+      <div class="merged-strip" id="ilMergedStrip"></div>
+    </div>
+
+    <div class="divider"><span>Run</span></div>
+
+    <button class="btn btn-primary btn-full" id="btnIL" disabled>Merge front &amp; back</button>
+    <div class="progress-wrap" id="ilProgress">
+      <div class="progress-row"><div class="progress-bar-wrap"><div class="progress-bar"><div class="progress-fill" id="ilFill"></div></div></div><button class="progress-cancel" id="ilCancel" style="display:none">Cancel</button></div>
+      <div class="progress-text" id="ilText"></div>
+    </div>
+    <div class="error-msg" id="ilError"></div>
+
+    <div class="result-bar" id="ilResult">
+      <div class="result-icon">✅</div>
+      <div class="result-info"><div class="result-name" id="ilResultName"></div><div class="result-meta" id="ilResultMeta"></div></div>
+      <div class="result-actions">
+        <button class="btn btn-ghost" id="btnILThumb">🔍 Preview</button>
+        <button class="btn btn-primary" id="btnILDown">⬇ Download</button>
+      </div>
+    </div>
+
+    <div class="corr-preview" id="ilCorrPreview">
+      <div class="corr-preview-hdr">Cleanup preview · sample pages</div>
+      <div class="corr-preview-sub">This applies your current settings to sample pages only. If color, skew and resolution look right, apply to all.</div>
+      <div class="corr-preview-grid" id="ilCorrPreviewGrid"></div>
+      <div class="corr-preview-actions">
+        <button class="btn btn-ghost" id="ilCorrBack">← Back to settings</button>
+        <button class="btn btn-primary" id="ilCorrApply">Apply to all →</button>
+      </div>
+    </div>
+
+    <div class="thumb-panel" id="ilThumbPanel">
+      <div class="thumb-header"><div class="thumb-header-lbl">Result preview</div><div class="thumb-status" id="ilThumbStatus"></div></div>
+      <div class="thumb-grid" id="ilThumbGrid"></div>
+    </div>
+
+    <div class="skew-panel" id="ilSkewPanel">
+      <div class="skew-panel-hdr"><div class="skew-panel-title">⚠ Skew detection</div><div class="skew-badges" id="ilSkewBadges"></div></div>
+      <div class="skew-list" id="ilSkewList"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       TAB B — Sequential Merge
+  ══════════════════════════════ -->
+  <div class="tab-content" id="tabB">
+
+    <div class="seq-drop-zone" id="seqDrop">
+      <input type="file" accept=".pdf" multiple id="seqFileInput">
+      <div class="seq-drop-icon">📂</div>
+      <div class="seq-drop-title">Add multiple PDF files</div>
+      <div class="seq-drop-hint">Click or drag · select several at once · each add stacks onto the list</div>
+    </div>
+
+    <div class="seq-list-header" id="seqListHeader">
+      <div class="seq-list-count" id="seqListCount"></div>
+      <button class="btn-reset" id="btnSeqReset">↺ Reset</button>
+    </div>
+
+    <div class="seq-list" id="seqList"></div>
+
+    <div id="seqActionsWrap" style="display:none">
+      <div class="divider"><span>Run</span></div>
+      <button class="btn btn-primary btn-full" id="btnSeq">Merge in order</button>
+      <div class="progress-wrap" id="seqProgress">
+        <div class="progress-row"><div class="progress-bar-wrap"><div class="progress-bar"><div class="progress-fill" id="seqFill"></div></div></div><button class="progress-cancel" id="seqCancel" style="display:none">Cancel</button></div>
+        <div class="progress-text" id="seqText"></div>
+      </div>
+      <div class="error-msg" id="seqError"></div>
+
+      <div class="result-bar" id="seqResult">
+        <div class="result-icon">✅</div>
+        <div class="result-info"><div class="result-name" id="seqResultName"></div><div class="result-meta" id="seqResultMeta"></div></div>
+        <div class="result-actions">
+          <button class="btn btn-ghost" id="btnSeqThumb">🔍 Preview</button>
+          <button class="btn btn-primary" id="btnSeqDown">⬇ Download</button>
+        </div>
+      </div>
+
+      <div class="corr-preview" id="seqCorrPreview">
+        <div class="corr-preview-hdr">Cleanup preview · sample pages</div>
+        <div class="corr-preview-sub">This applies your current settings to sample pages only. If color, skew and resolution look right, apply to all.</div>
+        <div class="corr-preview-grid" id="seqCorrPreviewGrid"></div>
+        <div class="corr-preview-actions">
+          <button class="btn btn-ghost" id="seqCorrBack">← Back to settings</button>
+          <button class="btn btn-primary" id="seqCorrApply">Apply to all →</button>
+        </div>
+      </div>
+
+      <div class="thumb-panel" id="seqThumbPanel">
+        <div class="thumb-header"><div class="thumb-header-lbl">Result preview</div><div class="thumb-status" id="seqThumbStatus"></div></div>
+        <div class="thumb-grid" id="seqThumbGrid"></div>
+      </div>
+    </div>
+  </div>
+  <!-- ══════════════════════════════
+       TAB C — Compress
+  ══════════════════════════════ -->
+  <div class="tab-content" id="tabC">
+
+    <div class="tab-section-header">
+      <div class="tab-section-title">Upload one PDF</div>
+      <button class="btn-reset" id="btnCmpReset">↺ Reset</button>
+    </div>
+
+    <div class="upload-zone" id="cmpDrop" style="margin-bottom:20px">
+      <input type="file" accept=".pdf" id="cmpFileInput">
+      <div class="zone-icon">🗜</div>
+      <div class="zone-lbl">PDF to compress</div>
+      <div class="zone-title">One scanned PDF</div>
+      <div class="zone-hint">Click or drag · settings in the panel above</div>
+      <div class="zone-meta" id="cmpName"></div>
+    </div>
+
+    <div class="divider"><span>Run</span></div>
+
+    <button class="btn btn-primary btn-full" id="btnCmp" disabled>Compress</button>
+    <div class="progress-wrap" id="cmpProgress">
+      <div class="progress-row"><div class="progress-bar-wrap"><div class="progress-bar"><div class="progress-fill" id="cmpFill"></div></div></div><button class="progress-cancel" id="cmpCancel" style="display:none">Cancel</button></div>
+      <div class="progress-text" id="cmpText"></div>
+    </div>
+    <div class="error-msg" id="cmpError"></div>
+
+    <div class="corr-preview" id="cmpCorrPreview">
+      <div class="corr-preview-hdr">Preview · sample pages</div>
+      <div class="corr-preview-sub">Sample pages compressed with your current settings. If text and charts look fine, apply to all.</div>
+      <div class="corr-preview-grid" id="cmpCorrPreviewGrid"></div>
+      <div class="corr-preview-actions">
+        <button class="btn btn-ghost" id="cmpCorrBack">← Back to settings</button>
+        <button class="btn btn-primary" id="cmpCorrApply">Apply to all →</button>
+      </div>
+    </div>
+
+    <div class="result-bar" id="cmpResult">
+      <div class="result-icon">✅</div>
+      <div class="result-info"><div class="result-name" id="cmpResultName"></div><div class="result-meta" id="cmpResultMeta"></div></div>
+      <div class="result-actions">
+        <button class="btn btn-ghost" id="btnCmpThumb">🔍 Preview</button>
+        <button class="btn btn-primary" id="btnCmpDown">⬇ Download</button>
+      </div>
+    </div>
+
+    <div class="thumb-panel" id="cmpThumbPanel">
+      <div class="thumb-header"><div class="thumb-header-lbl">Result preview</div><div class="thumb-status" id="cmpThumbStatus"></div></div>
+      <div class="thumb-grid" id="cmpThumbGrid"></div>
+    </div>
+  </div>
+
+  <div class="landing">
+
+    <div class="landing-block">
+      <h2><span class="num">01</span>Who it's for</h2>
+      <div class="use-grid">
+        <div class="use-card"><div class="uc-ic">📑</div><div class="uc-t">Double-sided scans</div><div class="uc-d">Scanned fronts and backs separately on a one-sided scanner? Re-assemble them into 1·2·3·4… order automatically.</div></div>
+        <div class="use-card"><div class="uc-ic">📦</div><div class="uc-t">Compress scans</div><div class="uc-d">When a scanned workbook is too heavy to email or upload, shrink the file size while keeping it readable.</div></div>
+        <div class="use-card"><div class="uc-ic">🔗</div><div class="uc-t">Merge PDFs</div><div class="uc-d">Drag to reorder scattered PDFs into one file. Exclude or rotate individual pages as needed.</div></div>
+      </div>
+    </div>
+
+    <div class="landing-block">
+      <h2><span class="num">02</span>How to use</h2>
+      <ol class="howto">
+        <li>Pick a tool<em>Merge double-sided · Merge in order · Compress.</em></li>
+        <li>Add your PDF<em>Click the upload area or drag a file in.</em></li>
+        <li>(Optional) Turn on cleanup<em>Fix skew, color and size. Auto mode keeps color and shading while shrinking.</em></li>
+        <li>Run and download<em>Check the sample-page preview, then apply to all pages and download.</em></li>
+      </ol>
+    </div>
+
+    <div class="landing-block">
+      <h2><span class="num">03</span>FAQ</h2>
+      <div class="faq-item"><div class="faq-q">How do I merge a double-sided document from a one-sided scanner?</div><div class="faq-a">Scan all the front pages into one PDF and all the back pages into another, then upload both — they're re-interleaved into 1·2·3·4… order. If you flipped the back stack, choose the reverse option.</div></div>
+      <div class="faq-item"><div class="faq-q">Are my files uploaded to a server?</div><div class="faq-a">No. All processing happens inside your browser (on your device); your PDF is never sent to any server. An internet connection is only needed for the first load.</div></div>
+      <div class="faq-item"><div class="faq-q">Is it free? Do I need an account?</div><div class="faq-a">It's completely free with no install and no signup. Just open the page and use it.</div></div>
+      <div class="faq-item"><div class="faq-q">How much smaller will my PDF get?</div><div class="faq-a">It depends on the scan and your settings, but scanned PDFs usually drop to about half their size. Adjust the resolution (DPI) and color mode to balance quality and size.</div></div>
+      <div class="faq-item"><div class="faq-q">Will compressing hurt quality?</div><div class="faq-a">Auto mode keeps color and shading while reducing size. The smallest black-and-white mode keeps only text, so charts and shading may disappear — best for text-only documents.</div></div>
+    </div>
+
+  </div>
+
+  <div class="site-footer">
+    Free in-browser PDF tools · your files never leave your device<br>
+    Merge double-sided scans · Compress PDF · Merge PDF
+  </div>
+
+</div><!-- /wrapper -->
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close-btn" id="lbClose">✕</button>
+  <div class="lb-inner">
+    <div class="lb-canvas-wrap" id="lbWrap"><div class="lb-spinner" id="lbSpinner">Rendering…</div></div>
+    <div class="lb-bar">
+      <button class="lb-nav" id="lbPrev">←</button>
+      <div class="lb-info" id="lbInfo">—</div>
+      <span class="lb-badge" id="lbSrc"></span>
+      <span class="lb-badge lb-skew" id="lbSkew"></span>
+      <button class="lb-nav" id="lbNext">→</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

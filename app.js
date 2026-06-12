@@ -1,4 +1,5 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const EN=(document.documentElement.lang||'').toLowerCase().startsWith('en');
 
 /* ═══════════════════════════ TABS ═══════════════════════════ */
 function switchTab(t){
@@ -86,12 +87,12 @@ async function renderLB(p){
   lbPrevBtn.disabled=p<=1;lbNextBtn.disabled=p>=lbDoc.numPages;
   const src=lbSrcMap[p-1]||'';
   lbSrcEl.className='lb-badge '+(src||'');
-  lbSrcEl.textContent=src==='odd'?'앞면':src==='even'?'뒷면':src||'';
+  lbSrcEl.textContent=src==='odd'?(EN?'Front':'앞면'):src==='even'?(EN?'Back':'뒷면'):src||'';
   lbSrcEl.style.display=src?'inline-block':'none';
   const sr=lbSkewMap[p-1];
   if(sr&&sr.level!=='ok'){
     lbSkewEl.className=`lb-badge lb-skew ${sr.level}`;
-    lbSkewEl.textContent=`기울기 ${sr.angle>=0?'+':''}${sr.angle.toFixed(1)}°`;
+    lbSkewEl.textContent=`${EN?'Skew ':'기울기 '}${sr.angle>=0?'+':''}${sr.angle.toFixed(1)}°`;
     lbSkewEl.style.display='inline-block';
   }else{lbSkewEl.style.display='none';}
   lbWrap.innerHTML='';lbWrap.appendChild(lbSpinner);lbSpinner.style.display='flex';
@@ -99,7 +100,7 @@ async function renderLB(p){
     const maxW=Math.min(window.innerWidth*.82,860);
     const c=await renderPageToCanvas(lbDoc,p,maxW);
     lbWrap.innerHTML='';lbWrap.appendChild(c);
-  }catch{lbWrap.innerHTML='<div class="lb-spinner">렌더링 실패</div>';}
+  }catch{lbWrap.innerHTML=(EN?'<div class="lb-spinner">Render failed</div>':'<div class="lb-spinner">렌더링 실패</div>');}
   lbBusy=false;
   if(lbQueued!==null){const n=lbQueued;lbQueued=null;lbPage=n;await renderLB(n);}
 }
@@ -115,10 +116,10 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ─ Shared thumbnail builder ─ */
-async function buildThumbGrid(gridEl,statusEl,doc,srcMap,skewResultsArr,onClickFn){
+async function buildThumbGrid(gridEl,statusEl,doc,srcMap,skewResultsArr,onClickFn,skipSkew){
   gridEl.innerHTML=''; const items=[];
   const total=doc.numPages;
-  statusEl.textContent=`총 ${total}페이지`;
+  statusEl.textContent=`${EN?`Total ${total} pages`:`총 ${total}페이지`}`;
   for(let p=1;p<=total;p++){
     const src=srcMap[p-1]||'';
     const el=document.createElement('div');
@@ -132,30 +133,32 @@ async function buildThumbGrid(gridEl,statusEl,doc,srcMap,skewResultsArr,onClickF
       <div class="thumb-skew-angle" id="tSA_${gridEl.id}_${p}"></div>
       <div class="thumb-footer">
         <span class="thumb-num">p${p}</span>
-        ${src?`<span class="thumb-src ${src}">${src==='odd'?'앞':'뒤'}</span>`:''}
+        ${src?`<span class="thumb-src ${src}">${src==='odd'?(EN?'F':'앞'):(EN?'B':'뒤')}</span>`:''}
       </div>`;
     el.addEventListener('click',()=>onClickFn(p));
     gridEl.appendChild(el);items.push(el);
   }
   for(let p=1;p<=total;p++){
-    statusEl.textContent=`분석 중 ${p}/${total}`;
+    statusEl.textContent=skipSkew?`${EN?`Rendering ${p}/${total}`:`렌더링 ${p}/${total}`}`:`${EN?`Analyzing ${p}/${total}`:`분석 중 ${p}/${total}`}`;
     try{
       const c=await renderPageToCanvas(doc,p,150);
       const wrap=items[p-1].querySelector('.thumb-canvas-wrap');
       const skel=wrap.querySelector('.thumb-skeleton');if(skel)skel.remove();
       wrap.insertBefore(c,wrap.firstChild);
-      const small=await renderPageToCanvas(doc,p,400);
-      const angle=detectSkewAngle(small);
-      const level=Math.abs(angle)>=SKEW_ERR?'error':Math.abs(angle)>=SKEW_WARN?'warn':'ok';
-      if(skewResultsArr)skewResultsArr[p-1]={angle,level};
-      const badge=document.getElementById(`tSB_${gridEl.id}_${p}`);
-      const angleEl=document.getElementById(`tSA_${gridEl.id}_${p}`);
-      if(level!=='ok'&&badge){badge.textContent=level==='error'?'🔴':'⚠';badge.classList.add('visible');}
-      if(level!=='ok'&&angleEl){angleEl.className=`thumb-skew-angle ${level}`;angleEl.textContent=`${angle>=0?'+':''}${angle.toFixed(1)}°`;}
+      if(!skipSkew){
+        const small=await renderPageToCanvas(doc,p,400);
+        const angle=detectSkewAngle(small);
+        const level=Math.abs(angle)>=SKEW_ERR?'error':Math.abs(angle)>=SKEW_WARN?'warn':'ok';
+        if(skewResultsArr)skewResultsArr[p-1]={angle,level};
+        const badge=document.getElementById(`tSB_${gridEl.id}_${p}`);
+        const angleEl=document.getElementById(`tSA_${gridEl.id}_${p}`);
+        if(level!=='ok'&&badge){badge.textContent=level==='error'?'🔴':'⚠';badge.classList.add('visible');}
+        if(level!=='ok'&&angleEl){angleEl.className=`thumb-skew-angle ${level}`;angleEl.textContent=`${angle>=0?'+':''}${angle.toFixed(1)}°`;}
+      }
     }catch{}
     await new Promise(r=>setTimeout(r,0));
   }
-  statusEl.textContent=`총 ${total}페이지`;
+  statusEl.textContent=`${EN?`Total ${total} pages`:`총 ${total}페이지`}`;
 }
 
 function renderSkewPanel(panelEl,badgesEl,listEl,skewResults,srcMap,onClickFn){
@@ -166,8 +169,8 @@ function renderSkewPanel(panelEl,badgesEl,listEl,skewResults,srcMap,onClickFn){
   if(!flagged.length){panelEl.classList.remove('visible');return;}
   const wC=flagged.filter(r=>r.level==='warn').length;
   const eC=flagged.filter(r=>r.level==='error').length;
-  badgesEl.innerHTML=(eC?`<span class="skew-badge error">심각 ${eC}페이지</span>`:'')+
-                     (wC?`<span class="skew-badge warn">주의 ${wC}페이지</span>`:'');
+  badgesEl.innerHTML=(eC?`<span class="skew-badge error">${EN?`${eC} severe`:`심각 ${eC}페이지`}</span>`:'')+
+                     (wC?`<span class="skew-badge warn">${EN?`${wC} warning`:`주의 ${wC}페이지`}</span>`:'');
   const mx=Math.max(...flagged.map(r=>Math.abs(r.angle)));
   listEl.innerHTML=flagged.map(r=>{
     const bp=Math.min(100,(Math.abs(r.angle)/Math.max(mx,SKEW_ERR*2))*100);
@@ -176,7 +179,7 @@ function renderSkewPanel(panelEl,badgesEl,listEl,skewResults,srcMap,onClickFn){
       <span class="skew-row-page">p${r.page}</span>
       <div class="skew-row-bar"><div class="skew-row-fill ${r.level}" style="width:${bp}%"></div></div>
       <span class="skew-row-angle ${r.level}">${sgn}${r.angle.toFixed(2)}°</span>
-      ${r.src?`<span class="skew-row-src ${r.src}">${r.src==='odd'?'앞':'뒤'}</span>`:''}
+      ${r.src?`<span class="skew-row-src ${r.src}">${r.src==='odd'?(EN?'F':'앞'):(EN?'B':'뒤')}</span>`:''}
     </div>`;
   }).join('');
   panelEl.classList.add('visible');
@@ -217,7 +220,7 @@ function processPageViaWorker(bitmap,opts){
       w.removeEventListener('message',onMsg); w.removeEventListener('error',onErr);
       if(m.type==='done')resolve(m); else reject(new Error(m.message||'worker error'));
     }
-    function onErr(e){ w.removeEventListener('message',onMsg); w.removeEventListener('error',onErr); reject(new Error('워커 오류: '+(e.message||'load failed'))); }
+    function onErr(e){ w.removeEventListener('message',onMsg); w.removeEventListener('error',onErr); reject(new Error((EN?'Worker error: ':'워커 오류: ')+(e.message||'load failed'))); }
     w.addEventListener('message',onMsg); w.addEventListener('error',onErr);
     w.postMessage({type:'process',id,bitmap,opts},[bitmap]);
   });
@@ -238,7 +241,7 @@ async function renderPageBitmap(page,dpi){
 
 function workerOpts(o){ return {deskew:o.deskew,colorMode:o.colorMode,enhance:o.enhance,quality:o.quality}; }
 function pickPreviewPages(n){ return n<=3 ? Array.from({length:n},(_,i)=>i+1) : [...new Set([1,Math.ceil(n/2),n])]; }
-const MODE_KO={bw:'흑백',gray:'회색조',color:'컬러'};
+const MODE_KO=EN?{bw:'B&W',gray:'Grayscale',color:'Color'}:{bw:'흑백',gray:'회색조',color:'컬러'};
 
 function downloadBytes(bytes,name){
   const blob=new Blob([bytes],{type:'application/pdf'});
@@ -252,7 +255,7 @@ async function buildCorrPreview(pdfBytes,opts,gridEl){
   const src=await pdfjsLib.getDocument({data:pdfBytes.slice()}).promise;
   const pages=pickPreviewPages(src.numPages);
   const wo=workerOpts(opts);
-  gridEl.innerHTML=pages.map(p=>`<div class="corr-preview-card" id="cpp_${gridEl.id}_${p}"><div class="corr-preview-skel"></div><div class="cap">p${p} · 준비 중</div></div>`).join('');
+  gridEl.innerHTML=pages.map(p=>`<div class="corr-preview-card" id="cpp_${gridEl.id}_${p}"><div class="corr-preview-skel"></div><div class="cap">${EN?`p${p} · loading`:`p${p} · 준비 중`}</div></div>`).join('');
   for(const pn of pages){
     const page=await src.getPage(pn);
     const bmp=await renderPageBitmap(page,120);
@@ -261,8 +264,8 @@ async function buildCorrPreview(pdfBytes,opts,gridEl){
     const url=URL.createObjectURL(blob);
     const card=document.getElementById(`cpp_${gridEl.id}_${pn}`);
     if(card){
-      const ang=Math.abs(r.angle)>=0.05?` · <span class="pp-ang">${r.angle>0?'+':''}${r.angle.toFixed(1)}° 보정</span>`:'';
-      card.innerHTML=`<img src="${url}" alt="p${pn} 보정 결과"><div class="cap">p${pn} · <span class="pp-mode">${MODE_KO[r.mode]||r.mode}</span>${ang}</div>`;
+      const ang=Math.abs(r.angle)>=0.05?` · <span class="pp-ang">${r.angle>0?'+':''}${r.angle.toFixed(1)}°${EN?' fix':' 보정'}</span>`:'';
+      card.innerHTML=`<img src="${url}" alt="${EN?`p${pn} result`:`p${pn} 보정 결과`}"><div class="cap">p${pn} · <span class="pp-mode">${MODE_KO[r.mode]||r.mode}</span>${ang}</div>`;
     }
     await new Promise(res=>setTimeout(res,0));
   }
@@ -278,7 +281,7 @@ async function correctAllViaWorker(pdfBytes,opts,onProg){
   const wo=workerOpts(opts);
   for(let i=1;i<=n;i++){
     if(corrCancelled)throw new Error('cancelled');
-    onProg&&onProg((i-1)/n,`보정 중 ${i}/${n}`);
+    onProg&&onProg((i-1)/n,`${EN?`Cleaning ${i}/${n}`:`보정 중 ${i}/${n}`}`);
     const page=await src.getPage(i);
     const vpPt=page.getViewport({scale:1});
     const bmp=await renderPageBitmap(page,dpi);
@@ -288,7 +291,7 @@ async function correctAllViaWorker(pdfBytes,opts,onProg){
     p.drawImage(embed,{x:0,y:0,width:vpPt.width,height:vpPt.height});
     await new Promise(res=>setTimeout(res,0));
   }
-  onProg&&onProg(1,'보정 마무리...');
+  onProg&&onProg(1,(EN?'Finishing…':'보정 마무리...'));
   return await out.save();
 }
 
@@ -335,14 +338,19 @@ document.getElementById('btnILReset').addEventListener('click',()=>{
     document.getElementById('name'+t).innerHTML='';
     document.getElementById('file'+t).value='';
   });
-  document.getElementById('ilChipBox').classList.remove('visible');
+  document.getElementById('oddThumbs').innerHTML='';
+  document.getElementById('evenThumbs').innerHTML='';
+  oddPdfJsDoc=null;evenPdfJsDoc=null;
+  document.getElementById('ilMergedPreview').classList.remove('visible');
+  document.getElementById('ilMergedStrip').innerHTML='';
+  ilUpdateChips();
   document.getElementById('ilResult').classList.remove('visible');
   document.getElementById('ilThumbPanel').classList.remove('visible');
   document.getElementById('ilSkewPanel').classList.remove('visible');
   document.getElementById('ilCorrPreview').classList.remove('visible');
   document.getElementById('ilProgress').classList.remove('visible');
   document.getElementById('ilError').classList.remove('visible');
-  document.getElementById('btnILThumb').textContent='🔍 미리보기';
+  document.getElementById('btnILThumb').textContent=(EN?'🔍 Preview':'🔍 미리보기');
   btnIL.disabled=true;
 });
 
@@ -355,26 +363,126 @@ async function ilHandle(file,type){
     const count=pdf.getPageCount();
     if(type==='odd'){oddFile=file;oddPageCount=count;}else{evenFile=file;evenPageCount=count;}
     zone.classList.add('loaded');
-    nameEl.innerHTML=`<span>${file.name}</span><br><span class="zone-pages">${count}페이지</span>`;
+    nameEl.innerHTML=`<span>${file.name}</span><br><span class="zone-pages">${EN?`${count} pages`:`${count}페이지`}</span>`;
     ilUpdateChips();btnIL.disabled=!(oddFile&&evenFile);
-  }catch{alert('PDF를 읽을 수 없습니다.');}
+    renderZoneThumbs(file,document.getElementById(type==='odd'?'oddThumbs':'evenThumbs'),type);
+  }catch{alert(EN?'Could not read the PDF.':'PDF를 읽을 수 없습니다.');}
 }
-document.querySelectorAll('input[name="ilOrder"]').forEach(r=>r.addEventListener('change',ilUpdateChips));
+document.querySelectorAll('input[name="ilOrder"]').forEach(r=>r.addEventListener('change',ilOrderChanged));
 function ilGetOrder(){return document.querySelector('input[name="ilOrder"]:checked').value;}
-function ilUpdateChips(){
-  const box=document.getElementById('ilChipBox'),chips=document.getElementById('ilChips');
-  if(!oddFile&&!evenFile){box.classList.remove('visible');return;}
-  const oC=oddPageCount,eC=evenPageCount,total=oC+eC;if(!total)return;
-  const order=ilGetOrder();
-  const ep=order==='reverse'?Array.from({length:eC},(_,i)=>eC-i):Array.from({length:eC},(_,i)=>i+1);
-  const out=[];const max=24;let shown=0;
-  for(let i=0;i<Math.max(oC,eC);i++){
-    if(i<oC&&shown<max){out.push(`<div class="chip odd">앞${i+1}→p${i*2+1}</div>`);shown++;}
-    if(i<eC&&shown<max){out.push(`<div class="chip even">뒤${ep[i]}→p${i*2+2}</div>`);shown++;}
-  }
-  if(total>max)out.push(`<div class="chip more">+${total-max}개 더</div>`);
-  chips.innerHTML=out.join('');box.classList.add('visible');
+let oddPdfJsDoc=null, evenPdfJsDoc=null, ilMergedToken=0;
+async function renderZoneThumbs(file,container,type){
+  container.innerHTML='<div class="zt-skel"></div><div class="zt-skel"></div><div class="zt-skel"></div>';
+  try{
+    const buf=await file.arrayBuffer();
+    const doc=await pdfjsLib.getDocument({data:buf.slice()}).promise;
+    if(type==='odd')oddPdfJsDoc=doc; else evenPdfJsDoc=doc;
+    const pages=pickPreviewPages(doc.numPages);
+    container.innerHTML='';
+    for(const pn of pages){
+      const c=await renderPageToCanvas(doc,pn,220);
+      const card=document.createElement('div');card.className='zt-card';
+      const lbl=document.createElement('div');lbl.className='zt-num';lbl.textContent='p'+pn;
+      card.appendChild(c);card.appendChild(lbl);container.appendChild(card);
+    }
+    renderMergedPreview();
+  }catch{container.innerHTML='';}
 }
+// Real interleaved preview of the merged result (before clicking merge)
+async function renderMergedPreview(){
+  const wrap=document.getElementById('ilMergedPreview');
+  const strip=document.getElementById('ilMergedStrip');
+  const note=document.getElementById('ilMergedNote');
+  if(!wrap)return;
+  if(!oddPdfJsDoc||!evenPdfJsDoc){wrap.classList.remove('visible');return;}
+  const token=++ilMergedToken;
+  const order=ilGetOrder();
+  const oC=oddPdfJsDoc.numPages, eC=evenPdfJsDoc.numPages;
+  const seq=[];
+  for(let i=0;i<Math.max(oC,eC);i++){
+    if(i<oC)seq.push({doc:oddPdfJsDoc,page:i+1,result:i*2+1,src:'odd'});
+    if(i<eC){const bp=order==='reverse'?eC-i:i+1;seq.push({doc:evenPdfJsDoc,page:bp,result:i*2+2,src:'even'});}
+  }
+  const cap=8;
+  const list=seq.slice(0,cap);
+  wrap.classList.add('visible');
+  note.textContent=`${EN?`· Merged ${seq.length} pages`:`· 합쳐진 결과 ${seq.length}페이지`}${seq.length>cap?` · ${EN?`first ${cap}`:`처음 ${cap}장`}`:''}`;
+  strip.innerHTML=list.map(s=>`<div class="mp-card ${s.src}"><div class="mp-canvas" id="mpc_${s.result}"><div class="zt-skel" style="width:100%;height:100%;border:none"></div></div><div class="mp-foot"><span class="mp-num">p${s.result}</span><span class="mp-src ${s.src}">${s.src==='odd'?(EN?'F':'앞'):(EN?'B':'뒤')}</span></div></div>`).join('')+(seq.length>cap?`<div class="mp-more">+${seq.length-cap}</div>`:'');
+  for(const s of list){
+    if(token!==ilMergedToken)return;
+    try{
+      const c=await renderPageToCanvas(s.doc,s.page,220);
+      const slot=document.getElementById('mpc_'+s.result);
+      if(slot){slot.innerHTML='';slot.appendChild(c);}
+    }catch{}
+  }
+}
+function ilOrderChanged(){ilUpdateChips();renderMergedPreview();}
+function ilUpdateChips(){
+  const box=document.getElementById('ilChipBox');
+  const wrap=document.getElementById('ilChips');
+  const sub=document.getElementById('mvSub');
+  const order=ilGetOrder();
+  const hasFiles=!!(oddFile||evenFile);
+  // real counts when available, else illustrative example
+  const oC=hasFiles?oddPageCount:3;
+  const eC=hasFiles?evenPageCount:3;
+  // back-sheet consumption order (scan-sheet numbers)
+  const back=order==='reverse'
+    ?Array.from({length:eC},(_,i)=>eC-i)        // 3,2,1  → shows 6,4,2 mapping
+    :Array.from({length:eC},(_,i)=>i+1);         // 1,2,3
+  const front=Array.from({length:oC},(_,i)=>i+1);
+  // dynamic zone titles
+  const evenTitle=document.getElementById('evenZoneTitle');
+  const oddTitle=document.getElementById('oddZoneTitle');
+  if(oddTitle){
+    oddTitle.textContent = hasFiles
+      ? front.map(n=>n*2-1).slice(0,3).join(' · ')+(oC>3?' · …':'')
+      : '1 · 3 · 5 · …';
+  }
+  if(evenTitle){
+    const evenResultPages = back.map((_,i)=>(i+1)*2); // result positions 2,4,6
+    if(order==='reverse'){
+      evenTitle.innerHTML = hasFiles
+        ? '↺ ' + evenResultPages.slice().reverse().slice(0,3).join(' · ')+(eC>3?' · …':'')
+        : '↺ … · 6 · 4 · 2';
+    }else{
+      evenTitle.textContent = hasFiles
+        ? evenResultPages.slice(0,3).join(' · ')+(eC>3?' · …':'')
+        : '2 · 4 · 6 · …';
+    }
+  }
+  // build result filmstrip (interleaved)
+  const result=[];const max=18;
+  for(let i=0;i<Math.max(oC,eC);i++){
+    if(i<oC)result.push({n:i*2+1,cls:'odd'});
+    if(i<eC)result.push({n:i*2+2,cls:'even'});
+  }
+  const shown=result.slice(0,max);
+  const resultCards=shown.map(c=>`<div class="mv-card solid ${c.cls}">${c.n}</div>`).join('')
+    +(result.length>max?`<div class="mv-card more">+${result.length-max}</div>`:'');
+  // front/back cards show their RESULT page numbers (앞 1·3·5, 뒤 2·4·6 / reverse 6·4·2)
+  const frontPages=Array.from({length:oC},(_,i)=>i*2+1);
+  const evenPages=Array.from({length:eC},(_,i)=>(i+1)*2);
+  const backPages=order==='reverse'?evenPages.slice().reverse():evenPages;
+  const fCards=frontPages.slice(0,9).map(n=>`<div class="mv-card solid odd">${n}</div>`).join('')+(oC>9?`<div class="mv-card more">+${oC-9}</div>`:'');
+  const bCards=backPages.slice(0,9).map(n=>`<div class="mv-card solid even">${n}</div>`).join('')+(eC>9?`<div class="mv-card more">+${eC-9}</div>`:'');
+  wrap.innerHTML=`
+    <div class="mv-row">
+      <div class="mv-row-head"><span class="mv-dot odd"></span>${EN?`Front scan · ${oC} sheet${oC>1?'s':''}`:`앞면 스캔본 · ${oC}장`}</div>
+      <div class="mv-cards">${fCards}</div>
+    </div>
+    <div class="mv-row">
+      <div class="mv-row-head"><span class="mv-dot even"></span>${EN?`Back scan · ${eC} sheet${eC>1?'s':''}`:`뒷면 스캔본 · ${eC}장`}${order==='reverse'?`<span class="mv-flip">${EN?'↺ inserted in reverse':'↺ 역순으로 끼움'}</span>`:''}</div>
+      <div class="mv-cards">${bCards}</div>
+    </div>
+    <div class="mv-join"><div class="mv-join-line"></div><div class="mv-join-txt">${EN?'Interleave':'번갈아 합치기'}</div><div class="mv-join-line"></div></div>
+    <div class="mv-result-label">${EN?`Merged result · ${result.length} pages`:`합쳐진 결과 · ${result.length}페이지`}</div>
+    <div class="mv-result">${resultCards}</div>`;
+  sub.textContent = hasFiles ? (EN?`${oC} front · ${eC} back`:`앞 ${oC}장 · 뒤 ${eC}장`) : (EN?'Example — 3 front · 3 back':'예시 — 앞 3장 · 뒤 3장');
+  box.classList.add('visible');
+}
+ilUpdateChips();
 
 let ilMergedBytes=null;
 
@@ -384,7 +492,7 @@ async function ilFinalize(bytes){
   const kb=Math.round(bytes.byteLength/1024);
   const base=oddFile.name.replace(/\.pdf$/i,'');
   document.getElementById('ilResultName').textContent=`${base}_merged.pdf`;
-  document.getElementById('ilResultMeta').textContent=`총 ${ilSrcMap.length}페이지 · ${kb>1024?(kb/1024).toFixed(1)+'MB':kb+'KB'}`;
+  document.getElementById('ilResultMeta').textContent=`${EN?`Total ${ilSrcMap.length} pages`:`총 ${ilSrcMap.length}페이지`} · ${kb>1024?(kb/1024).toFixed(1)+'MB':kb+'KB'}`;
   document.getElementById('ilResult').classList.add('visible');
   document.getElementById('btnILDown').onclick=()=>downloadBytes(bytes,`${base}_merged.pdf`);
 }
@@ -393,38 +501,38 @@ const ilProg=()=>{const pf=document.getElementById('ilFill'),pt=document.getElem
 document.getElementById('btnIL').addEventListener('click',async()=>{
   const errEl=document.getElementById('ilError');errEl.classList.remove('visible');
   ['ilResult','ilThumbPanel','ilSkewPanel','ilCorrPreview'].forEach(id=>document.getElementById(id).classList.remove('visible'));
-  ilThumbOpen=false;document.getElementById('btnILThumb').textContent='🔍 미리보기';
+  ilThumbOpen=false;document.getElementById('btnILThumb').textContent=(EN?'🔍 Preview':'🔍 미리보기');
   btnIL.classList.add('loading');btnIL.disabled=true;
   const pw=document.getElementById('ilProgress');pw.classList.add('visible');
   document.getElementById('ilCancel').style.display='none';
-  const sp=ilProg();sp(5,'PDF 파일 읽는 중...');
+  const sp=ilProg();sp(5,(EN?'Reading PDF files…':'PDF 파일 읽는 중...'));
   try{
     const [ob,eb]=await Promise.all([oddFile.arrayBuffer(),evenFile.arrayBuffer()]);
-    sp(20,'앞면 PDF 파싱...');const od=await PDFLib.PDFDocument.load(ob);
-    sp(40,'뒷면 PDF 파싱...');const ed=await PDFLib.PDFDocument.load(eb);
-    sp(55,'합치는 중...');const merged=await PDFLib.PDFDocument.create();
+    sp(20,(EN?'Parsing front PDF…':'앞면 PDF 파싱...'));const od=await PDFLib.PDFDocument.load(ob);
+    sp(40,(EN?'Parsing back PDF…':'뒷면 PDF 파싱...'));const ed=await PDFLib.PDFDocument.load(eb);
+    sp(55,(EN?'Merging…':'합치는 중...'));const merged=await PDFLib.PDFDocument.create();
     const order=ilGetOrder();
     const oC=od.getPageCount(),eC=ed.getPageCount();
     const ei=order==='reverse'?Array.from({length:eC},(_,i)=>eC-1-i):Array.from({length:eC},(_,i)=>i);
     ilSrcMap=[];
     const pairs=Math.max(oC,eC);
     for(let i=0;i<pairs;i++){
-      sp(55+Math.round(i/pairs*30),`페이지 합치는 중... ${i*2+1}/${pairs*2}`);
+      sp(55+Math.round(i/pairs*30),`${EN?`Merging pages… ${i*2+1}/${pairs*2}`:`페이지 합치는 중... ${i*2+1}/${pairs*2}`}`);
       if(i<oC){const[p]=await merged.copyPages(od,[i]);merged.addPage(p);ilSrcMap.push('odd');}
       if(i<eC){const[p]=await merged.copyPages(ed,[ei[i]]);merged.addPage(p);ilSrcMap.push('even');}
     }
-    sp(90,'합치기 완료');
+    sp(90,(EN?'Merge complete':'합치기 완료'));
     ilMergedBytes=await merged.save();
     const opts=corrGetOptions();
     if(!opts.enabled){
-      sp(100,'완료!');pw.classList.remove('visible');
+      sp(100,(EN?'Done!':'완료!'));pw.classList.remove('visible');
       await ilFinalize(ilMergedBytes);
     }else{
-      sp(100,'대표 페이지 미리보기 생성 중...');pw.classList.remove('visible');
+      sp(100,(EN?'Building sample-page preview…':'대표 페이지 미리보기 생성 중...'));pw.classList.remove('visible');
       document.getElementById('ilCorrPreview').classList.add('visible');
       await buildCorrPreview(ilMergedBytes,opts,document.getElementById('ilCorrPreviewGrid'));
     }
-  }catch(e){errEl.textContent='오류: '+e.message;errEl.classList.add('visible');pw.classList.remove('visible');}
+  }catch(e){errEl.textContent=(EN?'Error: ':'오류: ')+e.message;errEl.classList.add('visible');pw.classList.remove('visible');}
   btnIL.classList.remove('loading');btnIL.disabled=false;
 });
 
@@ -434,13 +542,13 @@ document.getElementById('ilCorrApply').addEventListener('click',async()=>{
   const errEl=document.getElementById('ilError');errEl.classList.remove('visible');
   const pw=document.getElementById('ilProgress');pw.classList.add('visible');
   const cancelBtn=document.getElementById('ilCancel');cancelBtn.style.display='';
-  const sp=ilProg();sp(0,'보정 시작...');
+  const sp=ilProg();sp(0,(EN?'Starting cleanup…':'보정 시작...'));
   try{
     const bytes=await correctAllViaWorker(ilMergedBytes,corrGetOptions(),(frac,msg)=>sp(Math.round(frac*100),msg));
-    sp(100,'완료!');pw.classList.remove('visible');
+    sp(100,(EN?'Done!':'완료!'));pw.classList.remove('visible');
     await ilFinalize(bytes);
   }catch(e){
-    errEl.textContent=e.message==='cancelled'?'보정을 취소했습니다.':'오류: '+e.message;
+    errEl.textContent=e.message==='cancelled'?(EN?'Cleanup canceled.':'보정을 취소했습니다.'):'오류: '+e.message;
     errEl.classList.add('visible');pw.classList.remove('visible');
   }
   cancelBtn.style.display='none';
@@ -454,18 +562,11 @@ document.getElementById('btnILThumb').addEventListener('click',async()=>{
   const panel=document.getElementById('ilThumbPanel');
   const btn=document.getElementById('btnILThumb');
   if(ilThumbOpen){
-    btn.textContent='✕ 닫기';panel.classList.add('visible');
+    btn.textContent=(EN?'✕ Close':'✕ 닫기');panel.classList.add('visible');
     const grid=document.getElementById('ilThumbGrid');
     const status=document.getElementById('ilThumbStatus');
-    await buildThumbGrid(grid,status,ilPdfDoc,ilSrcMap,ilSkewResults,(p)=>openLightbox(ilPdfDoc,p,ilSrcMap,ilSkewResults));
-    renderSkewPanel(
-      document.getElementById('ilSkewPanel'),
-      document.getElementById('ilSkewBadges'),
-      document.getElementById('ilSkewList'),
-      ilSkewResults,ilSrcMap,
-      'ilOpenLB'
-    );
-  }else{btn.textContent='🔍 미리보기';panel.classList.remove('visible');document.getElementById('ilSkewPanel').classList.remove('visible');}
+    await buildThumbGrid(grid,status,ilPdfDoc,ilSrcMap,ilSkewResults,(p)=>openLightbox(ilPdfDoc,p,ilSrcMap,ilSkewResults),true);
+  }else{btn.textContent=(EN?'🔍 Preview':'🔍 미리보기');panel.classList.remove('visible');}
 });
 window.ilOpenLB=(p)=>openLightbox(ilPdfDoc,p,ilSrcMap,ilSkewResults);
 
@@ -500,7 +601,7 @@ document.getElementById('btnSeqReset').addEventListener('click',()=>{
   seqFiles=[];seqIdCounter=0;seqPdfDoc=null;seqThumbOpen=false;
   seqRenderList();
   ['seqResult','seqThumbPanel','seqProgress','seqError','seqCorrPreview'].forEach(id=>document.getElementById(id).classList.remove('visible'));
-  document.getElementById('btnSeqThumb').textContent='🔍 미리보기';
+  document.getElementById('btnSeqThumb').textContent=(EN?'🔍 Preview':'🔍 미리보기');
 });
 
 // Detect OS drag enter/leave for the whole window
@@ -554,7 +655,7 @@ function seqRenderList(){
   const has=seqFiles.length>0;
   seqActionsWrap.style.display=has?'block':'none';
   seqListHeader.classList.toggle('visible',has);
-  if(has)seqListCount.textContent=`총 ${seqFiles.length}개 파일`;
+  if(has)seqListCount.textContent=`${EN?`${seqFiles.length} file${seqFiles.length>1?'s':''}`:`총 ${seqFiles.length}개 파일`}`;
 }
 
 function seqMakeInsertZone(insertBeforeId){
@@ -576,7 +677,7 @@ function seqMakeInsertZone(insertBeforeId){
 
 function seqRenderItem(entry){
   const el=document.getElementById(`seqItem_${entry.id}`);if(!el)return;
-  const p=el.querySelector('.seq-file-pages');if(p)p.textContent=`${entry.pageCount}페이지`;
+  const p=el.querySelector('.seq-file-pages');if(p)p.textContent=(EN?`${entry.pageCount} pages`:`${entry.pageCount}페이지`);
   if(entry.pdfJsDoc){
     renderPageToCanvas(entry.pdfJsDoc,1,72).then(c=>{
       const tw=el.querySelector('.seq-file-thumb');if(tw){tw.innerHTML='';tw.appendChild(c);}
@@ -589,19 +690,19 @@ function seqCreateItem(entry){
   el.className='seq-item';el.id=`seqItem_${entry.id}`;el.setAttribute('draggable','true');
   el.innerHTML=`
     <div class="seq-item-header">
-      <span class="seq-drag-handle" title="드래그로 순서 변경">⠿</span>
+      <span class="seq-drag-handle" title="${EN?'Drag to reorder':'드래그로 순서 변경'}">⠿</span>
       <div class="seq-file-thumb"><div class="mini-skel"></div></div>
       <div class="seq-file-info">
         <div class="seq-file-name">${entry.file.name}</div>
-        <div class="seq-file-pages">${entry.pageCount?entry.pageCount+'페이지':'읽는 중...'}</div>
+        <div class="seq-file-pages">${entry.pageCount?(EN?entry.pageCount+' pages':entry.pageCount+'페이지'):(EN?'Reading…':'읽는 중...')}</div>
       </div>
       <div class="seq-item-actions">
-        <button class="seq-icon-btn expand" title="페이지 보기" onclick="seqToggleStrip(${entry.id},this)">▾</button>
-        <button class="seq-icon-btn" title="삭제" onclick="seqRemove(${entry.id})">🗑</button>
+        <button class="seq-icon-btn expand" title="${EN?'View pages':'페이지 보기'}" onclick="seqToggleStrip(${entry.id},this)">▾</button>
+        <button class="seq-icon-btn" title="${EN?'Remove':'삭제'}" onclick="seqRemove(${entry.id})">🗑</button>
       </div>
     </div>
     <div class="seq-page-strip" id="seqStrip_${entry.id}">
-      <div class="seq-strip-title">페이지 미리보기 · 클릭하여 제외 · ↻ 회전</div>
+      <div class="seq-strip-title">${EN?'Page preview · click to exclude · ↻ rotate':'페이지 미리보기 · 클릭하여 제외 · ↻ 회전'}</div>
       <div class="seq-page-grid" id="seqPageGrid_${entry.id}"></div>
     </div>`;
   // Internal reorder drag
@@ -641,7 +742,7 @@ async function seqBuildPageGrid(entry){
       <div class="seq-page-canvas-wrap" id="seqCW_${entry.id}_${p}"><div class="thumb-skeleton"></div></div>
       <div class="seq-page-footer">
         <span class="seq-page-num">p${p}</span>
-        <button class="seq-rotate-btn" title="90° 회전" onclick="seqRotate(${entry.id},${p},event)">↻</button>
+        <button class="seq-rotate-btn" title="${EN?'Rotate 90°':'90° 회전'}" onclick="seqRotate(${entry.id},${p},event)">↻</button>
       </div>`;
     card.addEventListener('click',()=>seqToggleExclude(entry.id,p));
     grid.appendChild(card);
@@ -684,7 +785,7 @@ async function seqFinalize(bytes){
   const base=seqFiles[0]?seqFiles[0].file.name.replace(/\.pdf$/i,''):'merged';
   const name=`${base}_merged.pdf`;
   document.getElementById('seqResultName').textContent=name;
-  document.getElementById('seqResultMeta').textContent=`총 ${seqPdfDoc.numPages}페이지 · ${kb>1024?(kb/1024).toFixed(1)+'MB':kb+'KB'}`;
+  document.getElementById('seqResultMeta').textContent=`${EN?`Total ${seqPdfDoc.numPages} pages`:`총 ${seqPdfDoc.numPages}페이지`} · ${kb>1024?(kb/1024).toFixed(1)+'MB':kb+'KB'}`;
   document.getElementById('seqResult').classList.add('visible');
   document.getElementById('btnSeqDown').onclick=()=>downloadBytes(bytes,name);
 }
@@ -694,11 +795,11 @@ document.getElementById('btnSeq').addEventListener('click',async()=>{
   if(!seqFiles.length)return;
   const errEl=document.getElementById('seqError');errEl.classList.remove('visible');
   ['seqResult','seqThumbPanel','seqCorrPreview'].forEach(id=>document.getElementById(id).classList.remove('visible'));
-  seqThumbOpen=false;document.getElementById('btnSeqThumb').textContent='🔍 미리보기';
+  seqThumbOpen=false;document.getElementById('btnSeqThumb').textContent=(EN?'🔍 Preview':'🔍 미리보기');
   const btn=document.getElementById('btnSeq');btn.classList.add('loading');btn.disabled=true;
   const pw=document.getElementById('seqProgress');pw.classList.add('visible');
   document.getElementById('seqCancel').style.display='none';
-  const sp=seqProg();sp(5,'파일 읽는 중...');
+  const sp=seqProg();sp(5,(EN?'Reading files…':'파일 읽는 중...'));
   try{
     const merged=await PDFLib.PDFDocument.create();
     const total=seqFiles.length;
@@ -715,18 +816,18 @@ document.getElementById('btnSeq').addEventListener('click',async()=>{
         merged.addPage(page);
       }
     }
-    sp(90,'합치기 완료');
+    sp(90,(EN?'Merge complete':'합치기 완료'));
     seqMergedBytes=await merged.save();
     const opts=corrGetOptions();
     if(!opts.enabled){
-      sp(100,'완료!');pw.classList.remove('visible');
+      sp(100,(EN?'Done!':'완료!'));pw.classList.remove('visible');
       await seqFinalize(seqMergedBytes);
     }else{
-      sp(100,'대표 페이지 미리보기 생성 중...');pw.classList.remove('visible');
+      sp(100,(EN?'Building sample-page preview…':'대표 페이지 미리보기 생성 중...'));pw.classList.remove('visible');
       document.getElementById('seqCorrPreview').classList.add('visible');
       await buildCorrPreview(seqMergedBytes,opts,document.getElementById('seqCorrPreviewGrid'));
     }
-  }catch(e){errEl.textContent='오류: '+e.message;errEl.classList.add('visible');pw.classList.remove('visible');}
+  }catch(e){errEl.textContent=(EN?'Error: ':'오류: ')+e.message;errEl.classList.add('visible');pw.classList.remove('visible');}
   btn.classList.remove('loading');btn.disabled=false;
 });
 
@@ -736,13 +837,13 @@ document.getElementById('seqCorrApply').addEventListener('click',async()=>{
   const errEl=document.getElementById('seqError');errEl.classList.remove('visible');
   const pw=document.getElementById('seqProgress');pw.classList.add('visible');
   const cancelBtn=document.getElementById('seqCancel');cancelBtn.style.display='';
-  const sp=seqProg();sp(0,'보정 시작...');
+  const sp=seqProg();sp(0,(EN?'Starting cleanup…':'보정 시작...'));
   try{
     const bytes=await correctAllViaWorker(seqMergedBytes,corrGetOptions(),(frac,msg)=>sp(Math.round(frac*100),msg));
-    sp(100,'완료!');pw.classList.remove('visible');
+    sp(100,(EN?'Done!':'완료!'));pw.classList.remove('visible');
     await seqFinalize(bytes);
   }catch(e){
-    errEl.textContent=e.message==='cancelled'?'보정을 취소했습니다.':'오류: '+e.message;
+    errEl.textContent=e.message==='cancelled'?(EN?'Cleanup canceled.':'보정을 취소했습니다.'):'오류: '+e.message;
     errEl.classList.add('visible');pw.classList.remove('visible');
   }
   cancelBtn.style.display='none';
@@ -756,13 +857,13 @@ document.getElementById('btnSeqThumb').addEventListener('click',async()=>{
   const panel=document.getElementById('seqThumbPanel');
   const btn=document.getElementById('btnSeqThumb');
   if(seqThumbOpen){
-    btn.textContent='✕ 닫기';panel.classList.add('visible');
+    btn.textContent=(EN?'✕ Close':'✕ 닫기');panel.classList.add('visible');
     const grid=document.getElementById('seqThumbGrid');
     const status=document.getElementById('seqThumbStatus');
     await buildThumbGrid(grid,status,seqPdfDoc,[],[],
       (p)=>openLightbox(seqPdfDoc,p,[],[])
     );
-  }else{btn.textContent='🔍 미리보기';panel.classList.remove('visible');}
+  }else{btn.textContent=(EN?'🔍 Preview':'🔍 미리보기');panel.classList.remove('visible');}
 });
 
 /* ═══════════════════════════════════════════════════
@@ -790,16 +891,16 @@ async function cmpHandle(file){
     const pdf=await PDFLib.PDFDocument.load(u8.slice());
     cmpFile=file; cmpOrigBytes=u8;
     cmpDrop.classList.add('loaded');
-    document.getElementById('cmpName').innerHTML=`<span>${file.name}</span><br><span class="zone-pages">${pdf.getPageCount()}페이지 · ${fmtSize(file.size)}</span>`;
+    document.getElementById('cmpName').innerHTML=`<span>${file.name}</span><br><span class="zone-pages">${EN?`${pdf.getPageCount()} pages`:`${pdf.getPageCount()}페이지`} · ${fmtSize(file.size)}</span>`;
     btnCmp.disabled=false;
-  }catch{alert('PDF를 읽을 수 없습니다.');}
+  }catch{alert(EN?'Could not read the PDF.':'PDF를 읽을 수 없습니다.');}
 }
 
 document.getElementById('btnCmpReset').addEventListener('click',()=>{
   cmpFile=null;cmpOrigBytes=null;cmpPdfDoc=null;cmpThumbOpen=false;
   cmpDrop.classList.remove('loaded');document.getElementById('cmpName').innerHTML='';cmpFileInput.value='';
   ['cmpResult','cmpThumbPanel','cmpProgress','cmpError','cmpCorrPreview'].forEach(id=>document.getElementById(id).classList.remove('visible'));
-  document.getElementById('btnCmpThumb').textContent='🔍 미리보기';
+  document.getElementById('btnCmpThumb').textContent=(EN?'🔍 Preview':'🔍 미리보기');
   btnCmp.disabled=true;
 });
 
@@ -811,7 +912,7 @@ async function cmpFinalize(bytes){
   const orig=cmpFile.size, now=bytes.byteLength;
   const pct=orig>0?Math.max(0,Math.round((1-now/orig)*100)):0;
   document.getElementById('cmpResultName').textContent=`${base}_compressed.pdf`;
-  document.getElementById('cmpResultMeta').innerHTML=`총 ${cmpPdfDoc.numPages}페이지 · ${fmtSize(orig)} → ${fmtSize(now)} <span style="color:var(--ok)">(${pct}% 감소)</span>`;
+  document.getElementById('cmpResultMeta').innerHTML=`${EN?`Total ${cmpPdfDoc.numPages} pages`:`총 ${cmpPdfDoc.numPages}페이지`} · ${fmtSize(orig)} → ${fmtSize(now)} <span style="color:var(--ok)">(${pct}%${EN?' smaller':' 감소'})</span>`;
   document.getElementById('cmpResult').classList.add('visible');
   document.getElementById('btnCmpDown').onclick=()=>downloadBytes(bytes,`${base}_compressed.pdf`);
 }
@@ -820,16 +921,16 @@ document.getElementById('btnCmp').addEventListener('click',async()=>{
   if(!cmpOrigBytes)return;
   const errEl=document.getElementById('cmpError');errEl.classList.remove('visible');
   ['cmpResult','cmpThumbPanel','cmpCorrPreview'].forEach(id=>document.getElementById(id).classList.remove('visible'));
-  cmpThumbOpen=false;document.getElementById('btnCmpThumb').textContent='🔍 미리보기';
+  cmpThumbOpen=false;document.getElementById('btnCmpThumb').textContent=(EN?'🔍 Preview':'🔍 미리보기');
   btnCmp.classList.add('loading');btnCmp.disabled=true;
   const pw=document.getElementById('cmpProgress');pw.classList.add('visible');
   document.getElementById('cmpCancel').style.display='none';
-  const sp=cmpProg();sp(100,'대표 페이지 미리보기 생성 중...');
+  const sp=cmpProg();sp(100,(EN?'Building sample-page preview…':'대표 페이지 미리보기 생성 중...'));
   try{
     document.getElementById('cmpCorrPreview').classList.add('visible');
     await buildCorrPreview(cmpOrigBytes,corrGetOptionsForced(),document.getElementById('cmpCorrPreviewGrid'));
     pw.classList.remove('visible');
-  }catch(e){errEl.textContent='오류: '+e.message;errEl.classList.add('visible');pw.classList.remove('visible');}
+  }catch(e){errEl.textContent=(EN?'Error: ':'오류: ')+e.message;errEl.classList.add('visible');pw.classList.remove('visible');}
   btnCmp.classList.remove('loading');btnCmp.disabled=false;
 });
 
@@ -839,13 +940,13 @@ document.getElementById('cmpCorrApply').addEventListener('click',async()=>{
   const errEl=document.getElementById('cmpError');errEl.classList.remove('visible');
   const pw=document.getElementById('cmpProgress');pw.classList.add('visible');
   const cancelBtn=document.getElementById('cmpCancel');cancelBtn.style.display='';
-  const sp=cmpProg();sp(0,'보정 시작...');
+  const sp=cmpProg();sp(0,(EN?'Starting cleanup…':'보정 시작...'));
   try{
     const bytes=await correctAllViaWorker(cmpOrigBytes,corrGetOptionsForced(),(frac,msg)=>sp(Math.round(frac*100),msg));
-    sp(100,'완료!');pw.classList.remove('visible');
+    sp(100,(EN?'Done!':'완료!'));pw.classList.remove('visible');
     await cmpFinalize(bytes);
   }catch(e){
-    errEl.textContent=e.message==='cancelled'?'취소했습니다.':'오류: '+e.message;
+    errEl.textContent=e.message==='cancelled'?(EN?'Canceled.':'취소했습니다.'):'오류: '+e.message;
     errEl.classList.add('visible');pw.classList.remove('visible');
   }
   cancelBtn.style.display='none';
@@ -859,7 +960,7 @@ document.getElementById('btnCmpThumb').addEventListener('click',async()=>{
   const panel=document.getElementById('cmpThumbPanel');
   const btn=document.getElementById('btnCmpThumb');
   if(cmpThumbOpen){
-    btn.textContent='✕ 닫기';panel.classList.add('visible');
+    btn.textContent=(EN?'✕ Close':'✕ 닫기');panel.classList.add('visible');
     await buildThumbGrid(document.getElementById('cmpThumbGrid'),document.getElementById('cmpThumbStatus'),cmpPdfDoc,[],[],(p)=>openLightbox(cmpPdfDoc,p,[],[]));
-  }else{btn.textContent='🔍 미리보기';panel.classList.remove('visible');}
+  }else{btn.textContent=(EN?'🔍 Preview':'🔍 미리보기');panel.classList.remove('visible');}
 });

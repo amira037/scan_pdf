@@ -3,22 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF 도구 — 양면 스캔 합치기 · 보정</title>
+<title>PDF 양면 스캔 합치기·용량 줄이기 — 무료, 설치 없이 브라우저에서</title>
+<meta name="description" content="단면 스캐너로 따로 스캔한 앞면·뒷면 PDF를 순서대로 합치고, 기울기와 용량까지 보정합니다. 파일은 서버로 업로드되지 않고 브라우저에서 처리됩니다. 무료·회원가입 없음.">
+<link rel="canonical" href="https://pdf.dumpit.dev/">
+<link rel="alternate" hreflang="ko" href="https://pdf.dumpit.dev/">
+<link rel="alternate" hreflang="en" href="https://pdf.dumpit.dev/en/">
+<link rel="alternate" hreflang="x-default" href="https://pdf.dumpit.dev/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PDF 양면 스캔 합치기·용량 줄이기 — 무료, 설치 없이 브라우저에서">
+<meta property="og:description" content="단면 스캐너로 따로 스캔한 앞면·뒷면 PDF를 순서대로 합치고, 기울기와 용량까지 보정합니다. 파일은 서버로 업로드되지 않고 브라우저에서 처리됩니다. 무료·회원가입 없음.">
+<meta property="og:url" content="https://pdf.dumpit.dev/">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PDF 양면 스캔 합치기·용량 줄이기 — 무료, 설치 없이 브라우저에서">
+<meta name="twitter:description" content="단면 스캐너로 따로 스캔한 앞면·뒷면 PDF를 순서대로 합치고, 기울기와 용량까지 보정합니다. 파일은 서버로 업로드되지 않고 브라우저에서 처리됩니다. 무료·회원가입 없음.">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"PDF 양면 스캔 합치기·용량 줄이기","description":"단면 스캐너로 스캔한 앞면·뒷면 PDF 합치기, 여러 PDF 순서대로 합치기, 스캔 PDF 용량 줄이기. 모두 브라우저에서 처리.","applicationCategory":"UtilitiesApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"단면 스캐너로 양면 문서를 어떻게 합치나요?","acceptedAnswer":{"@type":"Answer","text":"앞면 묶음과 뒷면 묶음을 따로 스캔한 뒤 두 PDF를 올리면 원래 순서로 자동 재조합됩니다."}},
+{"@type":"Question","name":"파일이 서버로 업로드되나요?","acceptedAnswer":{"@type":"Answer","text":"아니요. 모든 처리는 브라우저(기기) 안에서 이뤄지며, PDF가 외부 서버로 전송되지 않습니다."}},
+{"@type":"Question","name":"무료인가요? 회원가입이 필요한가요?","acceptedAnswer":{"@type":"Answer","text":"완전히 무료이며 설치나 회원가입이 필요 없습니다."}},
+{"@type":"Question","name":"용량이 얼마나 줄어드나요?","acceptedAnswer":{"@type":"Answer","text":"스캔 품질과 설정에 따라 다르지만 스캔 PDF는 보통 절반 정도로 줄어듭니다."}},
+{"@type":"Question","name":"용량을 줄이면 화질이 깨지나요?","acceptedAnswer":{"@type":"Answer","text":"자동 모드는 색과 음영을 유지하면서 용량만 줄입니다. 흑백 모드는 글자만 남깁니다."}}
+]}
+</script>
 </head>
 <body>
 <div class="wrapper">
 
   <div class="header">
-    <div class="tag">PDF Tools</div>
-    <h1>PDF <span>합치기</span></h1>
-    <p class="subtitle">양면 스캔 재조합 · 순서 합치기 · 기울기·색상·용량 보정 — 모두 브라우저에서 처리, 서버 업로드 없음</p>
+    <div class="lang-switch"><a href="index.html" class="active">한국어</a> · <a href="en_index.html">English</a></div>
+    <div class="tag">Precision · On-device</div>
+    <h1>PDF <span>양면 스캔 합치기 · 용량 줄이기</span></h1>
+    <p class="intro">단면 스캐너로 따로 스캔한 <strong>앞면·뒷면 PDF를 원래 순서로 합치고</strong>, 여러 PDF를 하나로 모으고, 무거운 스캔본의 <strong>용량을 줄입니다</strong>. 파일은 서버로 업로드되지 않고 브라우저 안에서 처리되며, 무료이고 설치·회원가입이 필요 없습니다.</p>
+    <div class="priv-banner">🔒 모든 처리는 당신의 브라우저 안에서만 이뤄집니다. PDF가 외부 서버로 전송되지 않습니다.</div>
   </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
+<div class="tabs">
     <button class="tab-btn active" id="tabBtnA" onclick="switchTab('a')">⇄&nbsp; 양면 스캔 합치기</button>
     <button class="tab-btn" id="tabBtnB" onclick="switchTab('b')">＋&nbsp; 순서대로 합치기</button>
     <button class="tab-btn" id="tabBtnC" onclick="switchTab('c')">🗜&nbsp; 용량 줄이기</button>
@@ -78,40 +105,72 @@
       <button class="btn-reset" id="btnILReset">↺ 초기화</button>
     </div>
 
+    <div class="scan-guide">
+      <div class="sg-head">스캔하는 법</div>
+      <div class="sg-steps">
+        <div class="sg-step">
+          <div class="sg-n">1</div>
+          <div><div class="sg-t">앞면을 순서대로</div><div class="sg-d">1쪽부터 앞면만 차례로 스캔해 PDF 하나로 저장합니다.</div></div>
+        </div>
+        <div class="sg-step">
+          <div class="sg-n">2</div>
+          <div><div class="sg-t">묶음 그대로 뒤집기</div><div class="sg-d">스캔한 종이 묶음을 <b>순서를 바꾸지 말고 통째로 뒤집어</b> 뒷면만 다시 스캔합니다.</div></div>
+        </div>
+        <div class="sg-step">
+          <div class="sg-n">3</div>
+          <div><div class="sg-t">역방향으로 합치기</div><div class="sg-d">뒤집어 스캔하면 뒷면이 역순이 됩니다. 아래에서 <span class="sg-flip">역방향</span>을 켜면 1·2·3·4… 순서로 맞춰집니다.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="options-panel order-panel">
+      <div class="order-left">
+        <div class="options-title">뒷면 스캔 순서</div>
+        <div class="options-col">
+          <label class="option-item"><input type="radio" name="ilOrder" value="normal" checked><div class="radio-box"></div><div><div class="option-label">정방향</div><div class="option-sub">뒷면을 순서대로 스캔</div></div></label>
+          <label class="option-item"><input type="radio" name="ilOrder" value="reverse"><div class="radio-box"></div><div><div class="option-label">역방향 (뒤집기)</div><div class="option-sub">뒷면을 뒤집어 스캔한 경우</div></div></label>
+        </div>
+      </div>
+      <div class="merge-viz" id="ilChipBox">
+        <div class="mv-head">
+          <div class="mv-title">재조합 미리보기</div>
+          <div class="mv-sub" id="mvSub">예시 — 앞 3장 · 뒤 3장</div>
+        </div>
+        <div class="mv-sources" id="ilChips"></div>
+      </div>
+    </div>
+
     <div class="interleave-grid">
-      <div class="upload-zone odd" id="zoneOdd">
-        <input type="file" accept=".pdf" id="fileOdd">
-        <div class="zone-icon">📄</div>
-        <div class="zone-lbl odd">앞면 스캔본</div>
-        <div class="zone-title">1·3·5… 홀수 면</div>
-        <div class="zone-hint">앞면만 스캔한 PDF</div>
-        <div class="zone-meta" id="nameOdd"></div>
+      <div class="il-col">
+        <div class="upload-zone odd" id="zoneOdd">
+          <input type="file" accept=".pdf" id="fileOdd">
+          <div class="zone-icon">📄</div>
+          <div class="zone-lbl odd">앞면 스캔본</div>
+          <div class="zone-title" id="oddZoneTitle">1 · 3 · 5 · …</div>
+          <div class="zone-hint">앞면만 스캔한 PDF</div>
+          <div class="zone-meta" id="nameOdd"></div>
+        </div>
+        <div class="zone-thumbs" id="oddThumbs"></div>
       </div>
-      <div class="upload-zone even" id="zoneEven">
-        <input type="file" accept=".pdf" id="fileEven">
-        <div class="zone-icon">📄</div>
-        <div class="zone-lbl even">뒷면 스캔본</div>
-        <div class="zone-title">2·4·6… 짝수 면</div>
-        <div class="zone-hint">뒷면만 스캔한 PDF</div>
-        <div class="zone-meta" id="nameEven"></div>
-      </div>
-    </div>
-
-    <div class="options-panel">
-      <div class="options-title">뒷면 스캔 순서</div>
-      <div class="options-row">
-        <label class="option-item"><input type="radio" name="ilOrder" value="normal" checked><div class="radio-box"></div><div><div class="option-label">정방향</div><div class="option-sub">뒷면을 순서대로 스캔</div></div></label>
-        <label class="option-item"><input type="radio" name="ilOrder" value="reverse"><div class="radio-box"></div><div><div class="option-label">역방향 (뒤집기)</div><div class="option-sub">뒷면을 뒤집어 스캔한 경우</div></div></label>
+      <div class="il-col">
+        <div class="upload-zone even" id="zoneEven">
+          <input type="file" accept=".pdf" id="fileEven">
+          <div class="zone-icon">📄</div>
+          <div class="zone-lbl even">뒷면 스캔본</div>
+          <div class="zone-title" id="evenZoneTitle">2 · 4 · 6 · …</div>
+          <div class="zone-hint">뒷면만 스캔한 PDF</div>
+          <div class="zone-meta" id="nameEven"></div>
+        </div>
+        <div class="zone-thumbs" id="evenThumbs"></div>
       </div>
     </div>
 
-    <div class="chip-box" id="ilChipBox">
-      <div class="chip-title">페이지 순서 미리보기</div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--odd)"></div>앞면</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--even)"></div>뒷면</div>
+    <div class="merged-preview" id="ilMergedPreview">
+      <div class="mp-head">
+        <div class="mv-title">합쳐진 미리보기 <span class="mp-note" id="ilMergedNote"></span></div>
+        <div class="mp-legend"><span class="mp-key"><span class="mp-dot odd"></span>앞면</span><span class="mp-key"><span class="mp-dot even"></span>뒷면</span></div>
       </div>
-      <div class="chips" id="ilChips"></div>
+      <div class="merged-strip" id="ilMergedStrip"></div>
     </div>
 
     <div class="divider"><span>실행</span></div>
@@ -257,6 +316,43 @@
       <div class="thumb-header"><div class="thumb-header-lbl">결과물 미리보기</div><div class="thumb-status" id="cmpThumbStatus"></div></div>
       <div class="thumb-grid" id="cmpThumbGrid"></div>
     </div>
+  </div>
+
+  <div class="landing">
+
+    <div class="landing-block">
+      <h2><span class="num">01</span>이런 분께</h2>
+      <div class="use-grid">
+        <div class="use-card"><div class="uc-ic">📑</div><div class="uc-t">양면 문서 스캔</div><div class="uc-d">단면 스캐너로 앞면·뒷면을 따로 스캔했을 때, 1·2·3·4… 원래 순서로 자동 재조합합니다.</div></div>
+        <div class="use-card"><div class="uc-ic">📦</div><div class="uc-t">스캔 용량 줄이기</div><div class="uc-d">문제집·교재 스캔본이 너무 무거워 메일 첨부나 업로드가 안 될 때, 화질은 지키며 용량만 줄입니다.</div></div>
+        <div class="use-card"><div class="uc-ic">🔗</div><div class="uc-t">여러 PDF 합치기</div><div class="uc-d">흩어진 PDF를 드래그로 순서 바꿔 하나의 파일로 모읍니다. 페이지 제외·회전도 가능합니다.</div></div>
+      </div>
+    </div>
+
+    <div class="landing-block">
+      <h2><span class="num">02</span>사용법</h2>
+      <ol class="howto">
+        <li>도구 선택<em>양면 스캔 합치기 · 순서대로 합치기 · 용량 줄이기 중에서 고릅니다.</em></li>
+        <li>PDF 올리기<em>업로드 칸을 클릭하거나 파일을 드래그합니다.</em></li>
+        <li>(선택) 스캔 보정 켜기<em>기울기·색상·용량을 보정합니다. 자동 모드는 색과 음영을 살리며 용량을 줄입니다.</em></li>
+        <li>실행 후 다운로드<em>대표 페이지 미리보기로 확인한 뒤 전체에 적용하고 내려받습니다.</em></li>
+      </ol>
+    </div>
+
+    <div class="landing-block">
+      <h2><span class="num">03</span>자주 묻는 질문</h2>
+      <div class="faq-item"><div class="faq-q">단면 스캐너로 양면 문서를 어떻게 합치나요?</div><div class="faq-a">앞면만 모아 한 번, 뒷면만 모아 한 번 스캔한 뒤 두 PDF를 올리면 1·2·3·4… 순서로 자동 재조합됩니다. 뒷면을 뒤집어 스캔한 경우 역방향 옵션을 선택하세요.</div></div>
+      <div class="faq-item"><div class="faq-q">파일이 서버로 업로드되나요?</div><div class="faq-a">아니요. 모든 처리는 브라우저(기기) 안에서 이뤄지며, PDF가 외부 서버로 전송되지 않습니다. 인터넷 연결은 첫 로딩에만 필요합니다.</div></div>
+      <div class="faq-item"><div class="faq-q">무료인가요? 회원가입이 필요한가요?</div><div class="faq-a">완전히 무료이며 설치나 회원가입이 필요 없습니다. 페이지를 열면 바로 사용할 수 있습니다.</div></div>
+      <div class="faq-item"><div class="faq-q">용량이 얼마나 줄어드나요?</div><div class="faq-a">스캔 품질과 설정에 따라 다르지만, 스캔 PDF는 보통 절반 정도로 줄어듭니다. 해상도(DPI)와 색상 모드를 조절해 화질과 용량의 균형을 맞출 수 있습니다.</div></div>
+      <div class="faq-item"><div class="faq-q">용량을 줄이면 화질이 깨지나요?</div><div class="faq-a">자동 모드는 색과 음영을 유지하면서 용량만 줄입니다. 가장 작게 만드는 흑백 모드는 글자만 남기므로 도표나 음영은 사라질 수 있어, 글자 위주 문서에 적합합니다.</div></div>
+    </div>
+
+  </div>
+
+  <div class="site-footer">
+    브라우저에서 동작하는 무료 PDF 도구 · 파일은 기기를 떠나지 않습니다<br>
+    PDF 양면 스캔 합치기 · PDF 용량 줄이기 · PDF 합치기
   </div>
 
 </div><!-- /wrapper -->
