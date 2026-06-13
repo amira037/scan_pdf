@@ -15,7 +15,7 @@
      { type:'error', id, message }
    ============================================================ */
 
-importScripts('https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js');
+importScripts('vendor/pako.min.js');
 
 self.onmessage = async (e) => {
   const m = e.data;

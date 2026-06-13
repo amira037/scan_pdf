@@ -1,0 +1,5 @@
+# pdf.dumpit.dev — allow all crawlers (Google, Naver Yeti, Bing, etc.)
+User-agent: *
+Allow: /
+
+Sitemap: https://pdf.dumpit.dev/sitemap.xml
