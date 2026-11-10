@@ -63,7 +63,7 @@ function detectSkewAngle(canvas){
 }
 
 /* ─ Shared lightbox ─ */
-let lbDoc=null,lbPage=1,lbSrcMap=[],lbSkewMap=[],lbBusy=false,lbQueued=null;
+let lbDoc=null,lbImgs=null,lbPage=1,lbSrcMap=[],lbSkewMap=[],lbBusy=false,lbQueued=null;
 const lbEl=document.getElementById('lightbox');
 const lbWrap=document.getElementById('lbWrap');
 const lbSpinner=document.getElementById('lbSpinner');
@@ -74,17 +74,26 @@ const lbSrcEl=document.getElementById('lbSrc');
 const lbSkewEl=document.getElementById('lbSkew');
 
 function openLightbox(doc,page,srcMap,skewMap){
-  lbDoc=doc;lbSrcMap=srcMap||[];lbSkewMap=skewMap||[];
+  lbDoc=doc;lbImgs=null;lbSrcMap=srcMap||[];lbSkewMap=skewMap||[];
   lbPage=page;
   lbEl.classList.add('open');
   document.body.style.overflow='hidden';
   renderLB(page);
 }
+// Same lightbox for pre-rendered images (correction preview). items=[{url,cap}]
+function openImageLightbox(items,page){
+  lbDoc=null;lbImgs=items;lbSrcMap=[];lbSkewMap=[];
+  lbPage=page;
+  lbEl.classList.add('open');
+  document.body.style.overflow='hidden';
+  renderLB(page);
+}
+function lbCount(){return lbImgs?lbImgs.length:lbDoc?lbDoc.numPages:0;}
 function closeLB(){lbEl.classList.remove('open');document.body.style.overflow='';}
 async function renderLB(p){
   if(lbBusy){lbQueued=p;return;}lbBusy=true;
-  lbInfo.textContent=`${p} / ${lbDoc.numPages}`;
-  lbPrevBtn.disabled=p<=1;lbNextBtn.disabled=p>=lbDoc.numPages;
+  lbInfo.textContent=lbImgs?`${lbImgs[p-1].cap} · ${p} / ${lbCount()}`:`${p} / ${lbCount()}`;
+  lbPrevBtn.disabled=p<=1;lbNextBtn.disabled=p>=lbCount();
   const src=lbSrcMap[p-1]||'';
   lbSrcEl.className='lb-badge '+(src||'');
   lbSrcEl.textContent=src==='odd'?(EN?'Front':'앞면'):src==='even'?(EN?'Back':'뒷면'):src||'';
@@ -95,11 +104,18 @@ async function renderLB(p){
     lbSkewEl.textContent=`${EN?'Skew ':'기울기 '}${sr.angle>=0?'+':''}${sr.angle.toFixed(1)}°`;
     lbSkewEl.style.display='inline-block';
   }else{lbSkewEl.style.display='none';}
+  lbWrap.classList.remove('zoomed');
   lbWrap.innerHTML='';lbWrap.appendChild(lbSpinner);lbSpinner.style.display='flex';
   try{
-    const maxW=Math.min(window.innerWidth*.82,860);
-    const c=await renderPageToCanvas(lbDoc,p,maxW);
-    lbWrap.innerHTML='';lbWrap.appendChild(c);
+    if(lbImgs){
+      const img=new Image();img.src=lbImgs[p-1].url;await img.decode();
+      lbWrap.innerHTML='';lbWrap.appendChild(img);
+    }else{
+      // render at 2× so click-to-zoom (actual pixels) is actually larger and sharp
+      const maxW=Math.min(window.innerWidth*.82,860)*2;
+      const c=await renderPageToCanvas(lbDoc,p,maxW);
+      lbWrap.innerHTML='';lbWrap.appendChild(c);
+    }
   }catch{lbWrap.innerHTML=(EN?'<div class="lb-spinner">Render failed</div>':'<div class="lb-spinner">렌더링 실패</div>');}
   lbBusy=false;
   if(lbQueued!==null){const n=lbQueued;lbQueued=null;lbPage=n;await renderLB(n);}
@@ -107,12 +123,20 @@ async function renderLB(p){
 document.getElementById('lbClose').addEventListener('click',closeLB);
 lbEl.addEventListener('click',e=>{if(e.target===lbEl)closeLB();});
 lbPrevBtn.addEventListener('click',()=>{if(lbPage>1){lbPage--;renderLB(lbPage);}});
-lbNextBtn.addEventListener('click',()=>{if(lbDoc&&lbPage<lbDoc.numPages){lbPage++;renderLB(lbPage);}});
+lbNextBtn.addEventListener('click',()=>{if(lbPage<lbCount()){lbPage++;renderLB(lbPage);}});
+// click page → toggle fit-to-screen / actual size
+lbWrap.addEventListener('click',e=>{
+  if(!e.target.matches('canvas,img'))return;
+  const z=lbWrap.classList.toggle('zoomed');
+  if(z){const r=e.target.getBoundingClientRect();lbWrap.scrollLeft=0;lbWrap.scrollTop=0;
+    const fx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/r.height;
+    requestAnimationFrame(()=>{lbWrap.scrollLeft=fx*lbWrap.scrollWidth-lbWrap.clientWidth/2;lbWrap.scrollTop=fy*lbWrap.scrollHeight-lbWrap.clientHeight/2;});}
+});
 document.addEventListener('keydown',e=>{
   if(!lbEl.classList.contains('open'))return;
   if(e.key==='Escape')closeLB();
   if(e.key==='ArrowLeft'&&lbPage>1){lbPage--;renderLB(lbPage);}
-  if(e.key==='ArrowRight'&&lbDoc&&lbPage<lbDoc.numPages){lbPage++;renderLB(lbPage);}
+  if(e.key==='ArrowRight'&&lbPage<lbCount()){lbPage++;renderLB(lbPage);}
 });
 
 /* ─ Shared thumbnail builder ─ */
@@ -255,20 +279,51 @@ async function buildCorrPreview(pdfBytes,opts,gridEl){
   const src=await pdfjsLib.getDocument({data:pdfBytes.slice()}).promise;
   const pages=pickPreviewPages(src.numPages);
   const wo=workerOpts(opts);
+  const dpi=opts.optimize?opts.dpi:200; // same DPI as the real output so zooming shows true quality
+  gridEl.onclick=e=>{
+    const card=e.target.closest('.corr-preview-card');const imgs=[...gridEl.querySelectorAll('.corr-preview-card img')];
+    const i=card?imgs.indexOf(card.querySelector('img')):-1;
+    if(i>=0)openImageLightbox(imgs.map(im=>({url:im.src,cap:im.dataset.cap})),i+1);
+  };
   gridEl.innerHTML=pages.map(p=>`<div class="corr-preview-card" id="cpp_${gridEl.id}_${p}"><div class="corr-preview-skel"></div><div class="cap">${EN?`p${p} · loading`:`p${p} · 준비 중`}</div></div>`).join('');
   for(const pn of pages){
     const page=await src.getPage(pn);
-    const bmp=await renderPageBitmap(page,120);
+    const bmp=await renderPageBitmap(page,dpi);
     const r=await processPageViaWorker(bmp,wo);
     const blob=new Blob([r.bytes],{type:r.format==='png'?'image/png':'image/jpeg'});
     const url=URL.createObjectURL(blob);
     const card=document.getElementById(`cpp_${gridEl.id}_${pn}`);
     if(card){
       const ang=Math.abs(r.angle)>=0.05?` · <span class="pp-ang">${r.angle>0?'+':''}${r.angle.toFixed(1)}°${EN?' fix':' 보정'}</span>`:'';
-      card.innerHTML=`<img src="${url}" alt="${EN?`p${pn} result`:`p${pn} 보정 결과`}"><div class="cap">p${pn} · <span class="pp-mode">${MODE_KO[r.mode]||r.mode}</span>${ang}</div>`;
+      card.innerHTML=`<img src="${url}" data-cap="p${pn} · ${MODE_KO[r.mode]||r.mode}" alt="${EN?`p${pn} result`:`p${pn} 보정 결과`}"><div class="cap">p${pn} · <span class="pp-mode">${MODE_KO[r.mode]||r.mode}</span>${ang}</div>`;
     }
     await new Promise(res=>setTimeout(res,0));
   }
+}
+
+// pdf-lib's embedPng always converts to 8-bit DeviceRGB (3× bigger, and viewers
+// report RGB). Our worker PNG is 1-bit gray with filter-0 rows, so its IDAT is
+// valid FlateDecode data with PNG predictors → embed it as-is as DeviceGray 1bpc.
+function embedBilevelPng(doc,png){
+  const dv=new DataView(png.buffer,png.byteOffset,png.byteLength);
+  const W=dv.getUint32(16),H=dv.getUint32(20);
+  const parts=[];let o=8;
+  while(o<png.length){
+    const len=dv.getUint32(o),type=String.fromCharCode(png[o+4],png[o+5],png[o+6],png[o+7]);
+    if(type==='IDAT')parts.push(png.subarray(o+8,o+8+len));
+    o+=12+len;
+  }
+  const idat=new Uint8Array(parts.reduce((s,a)=>s+a.length,0));
+  parts.reduce((off,a)=>(idat.set(a,off),off+a.length),0);
+  const stream=doc.context.stream(idat,{
+    Type:'XObject',Subtype:'Image',Width:W,Height:H,ColorSpace:'DeviceGray',BitsPerComponent:1,
+    Filter:'FlateDecode',DecodeParms:{Predictor:15,Colors:1,BitsPerComponent:1,Columns:W},
+  });
+  return doc.context.register(stream);
+}
+function drawImageRef(page,ref,w,h){
+  const name=page.node.newXObject('Im',ref);
+  page.pushOperators(PDFLib.pushGraphicsState(),PDFLib.concatTransformationMatrix(w,0,0,h,0,0),PDFLib.drawObject(name),PDFLib.popGraphicsState());
 }
 
 // Full correction of every page via worker. onProg(frac,msg). Throws Error('cancelled').
@@ -286,9 +341,13 @@ async function correctAllViaWorker(pdfBytes,opts,onProg){
     const vpPt=page.getViewport({scale:1});
     const bmp=await renderPageBitmap(page,dpi);
     const r=await processPageViaWorker(bmp,wo);
-    const embed=r.format==='png'?await out.embedPng(r.bytes):await out.embedJpg(r.bytes);
     const p=out.addPage([vpPt.width,vpPt.height]);
-    p.drawImage(embed,{x:0,y:0,width:vpPt.width,height:vpPt.height});
+    if(r.format==='png'){
+      drawImageRef(p,embedBilevelPng(out,r.bytes),vpPt.width,vpPt.height);
+    }else{
+      // gray pages arrive as 1-component JPEG → pdf-lib embeds DeviceGray
+      p.drawImage(await out.embedJpg(r.bytes),{x:0,y:0,width:vpPt.width,height:vpPt.height});
+    }
     await new Promise(res=>setTimeout(res,0));
   }
   onProg&&onProg(1,(EN?'Finishing…':'보정 마무리...'));

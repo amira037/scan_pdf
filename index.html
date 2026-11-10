@@ -81,14 +81,14 @@
         <div class="options-row">
           <label class="option-item"><input type="checkbox" id="corrDeskew" checked><div class="check-box"></div><div><div class="option-label">기울기 자동 보정</div><div class="option-sub">보정 후 재검사로 오보정 방지</div></div></label>
           <label class="option-item"><input type="checkbox" id="corrEnhance" checked><div class="check-box"></div><div><div class="option-label">선명하게</div><div class="option-sub">컬러·회색조는 대비 보정</div></div></label>
-          <label class="option-item"><input type="checkbox" id="corrOptimize" checked><div class="check-box"></div><div><div class="option-label">용량 최적화</div><div class="option-sub">인쇄용 해상도로 축소</div></div></label>
+          <label class="option-item"><input type="checkbox" id="corrOptimize" checked><div class="check-box"></div><div><div class="option-label">용량 최적화</div><div class="option-sub">사무용 프린터·화면공유 최적화 (200DPI · 품질 75)</div></div></label>
         </div>
         <div class="corr-sub open" id="corrOptSub">
           <div class="corr-field"><span>해상도</span>
             <select class="opt-select" id="corrDpi"><option value="150">150 DPI · 초안</option><option value="200" selected>200 DPI · 일반</option><option value="300">300 DPI · 고품질</option></select>
           </div>
           <div class="corr-field"><span>압축 품질</span>
-            <input type="range" class="opt-range" id="corrQuality" min="40" max="95" value="70"><span class="corr-qval" id="corrQualityVal">70</span>
+            <input type="range" class="opt-range" id="corrQuality" min="40" max="95" value="75"><span class="corr-qval" id="corrQualityVal">75</span>
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@
 
     <div class="corr-preview" id="ilCorrPreview">
       <div class="corr-preview-hdr">보정 미리보기 · 대표 페이지</div>
-      <div class="corr-preview-sub">현재 설정을 대표 페이지에만 적용한 결과예요. 색상·기울기·해상도가 의도대로면 전체에 적용하세요.</div>
+      <div class="corr-preview-sub">현재 설정을 대표 페이지에만 적용한 결과예요. 색상·기울기·해상도가 의도대로면 전체에 적용하세요. 페이지를 누르면 크게 볼 수 있어요.</div>
       <div class="corr-preview-grid" id="ilCorrPreviewGrid"></div>
       <div class="corr-preview-actions">
         <button class="btn btn-ghost" id="ilCorrBack">← 설정 다시</button>
@@ -251,7 +251,7 @@
 
       <div class="corr-preview" id="seqCorrPreview">
         <div class="corr-preview-hdr">보정 미리보기 · 대표 페이지</div>
-        <div class="corr-preview-sub">현재 설정을 대표 페이지에만 적용한 결과예요. 색상·기울기·해상도가 의도대로면 전체에 적용하세요.</div>
+        <div class="corr-preview-sub">현재 설정을 대표 페이지에만 적용한 결과예요. 색상·기울기·해상도가 의도대로면 전체에 적용하세요. 페이지를 누르면 크게 볼 수 있어요.</div>
         <div class="corr-preview-grid" id="seqCorrPreviewGrid"></div>
         <div class="corr-preview-actions">
           <button class="btn btn-ghost" id="seqCorrBack">← 설정 다시</button>
@@ -295,7 +295,7 @@
 
     <div class="corr-preview" id="cmpCorrPreview">
       <div class="corr-preview-hdr">미리보기 · 대표 페이지</div>
-      <div class="corr-preview-sub">현재 설정으로 줄인 대표 페이지예요. 글자·도표가 괜찮으면 전체에 적용하세요.</div>
+      <div class="corr-preview-sub">현재 설정으로 줄인 대표 페이지예요. 글자·도표가 괜찮으면 전체에 적용하세요. 페이지를 누르면 크게 볼 수 있어요.</div>
       <div class="corr-preview-grid" id="cmpCorrPreviewGrid"></div>
       <div class="corr-preview-actions">
         <button class="btn btn-ghost" id="cmpCorrBack">← 설정 다시</button>

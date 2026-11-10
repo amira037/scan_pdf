@@ -81,14 +81,14 @@
         <div class="options-row">
           <label class="option-item"><input type="checkbox" id="corrDeskew" checked><div class="check-box"></div><div><div class="option-label">Auto-deskew</div><div class="option-sub">Re-checks to avoid over-correction</div></div></label>
           <label class="option-item"><input type="checkbox" id="corrEnhance" checked><div class="check-box"></div><div><div class="option-label">Sharpen</div><div class="option-sub">Contrast boost for color/gray</div></div></label>
-          <label class="option-item"><input type="checkbox" id="corrOptimize" checked><div class="check-box"></div><div><div class="option-label">Optimize size</div><div class="option-sub">Downscale to print resolution</div></div></label>
+          <label class="option-item"><input type="checkbox" id="corrOptimize" checked><div class="check-box"></div><div><div class="option-label">Optimize size</div><div class="option-sub">Tuned for office printers &amp; screen sharing (200 DPI · Q75)</div></div></label>
         </div>
         <div class="corr-sub open" id="corrOptSub">
           <div class="corr-field"><span>Resolution</span>
             <select class="opt-select" id="corrDpi"><option value="150">150 DPI · Draft</option><option value="200" selected>200 DPI · Normal</option><option value="300">300 DPI · High</option></select>
           </div>
           <div class="corr-field"><span>Quality</span>
-            <input type="range" class="opt-range" id="corrQuality" min="40" max="95" value="70"><span class="corr-qval" id="corrQualityVal">70</span>
+            <input type="range" class="opt-range" id="corrQuality" min="40" max="95" value="75"><span class="corr-qval" id="corrQualityVal">75</span>
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@
 
     <div class="corr-preview" id="ilCorrPreview">
       <div class="corr-preview-hdr">Cleanup preview · sample pages</div>
-      <div class="corr-preview-sub">This applies your current settings to sample pages only. If color, skew and resolution look right, apply to all.</div>
+      <div class="corr-preview-sub">This applies your current settings to sample pages only. If color, skew and resolution look right, apply to all. Click a page to enlarge.</div>
       <div class="corr-preview-grid" id="ilCorrPreviewGrid"></div>
       <div class="corr-preview-actions">
         <button class="btn btn-ghost" id="ilCorrBack">← Back to settings</button>
@@ -251,7 +251,7 @@
 
       <div class="corr-preview" id="seqCorrPreview">
         <div class="corr-preview-hdr">Cleanup preview · sample pages</div>
-        <div class="corr-preview-sub">This applies your current settings to sample pages only. If color, skew and resolution look right, apply to all.</div>
+        <div class="corr-preview-sub">This applies your current settings to sample pages only. If color, skew and resolution look right, apply to all. Click a page to enlarge.</div>
         <div class="corr-preview-grid" id="seqCorrPreviewGrid"></div>
         <div class="corr-preview-actions">
           <button class="btn btn-ghost" id="seqCorrBack">← Back to settings</button>
@@ -295,7 +295,7 @@
 
     <div class="corr-preview" id="cmpCorrPreview">
       <div class="corr-preview-hdr">Preview · sample pages</div>
-      <div class="corr-preview-sub">Sample pages compressed with your current settings. If text and charts look fine, apply to all.</div>
+      <div class="corr-preview-sub">Sample pages compressed with your current settings. If text and charts look fine, apply to all. Click a page to enlarge.</div>
       <div class="corr-preview-grid" id="cmpCorrPreviewGrid"></div>
       <div class="corr-preview-actions">
         <button class="btn btn-ghost" id="cmpCorrBack">← Back to settings</button>

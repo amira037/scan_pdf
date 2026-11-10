@@ -420,3 +420,11 @@ h1 span{color:var(--accent);}
 .sg-d{font-size:12px;color:var(--muted2);line-height:1.6;}
 .sg-d b{color:var(--even);font-weight:600;}
 .sg-flip{color:var(--even);}
+
+/* ── Lightbox zoom (click page: fit ↔ actual size) ── */
+.lb-canvas-wrap img{display:block;max-width:85vw;max-height:78vh;width:auto;height:auto;}
+.lb-canvas-wrap canvas,.lb-canvas-wrap img{cursor:zoom-in;}
+.lb-canvas-wrap.zoomed{display:block;overflow:auto;max-width:90vw;max-height:78vh;}
+.lb-canvas-wrap.zoomed canvas,.lb-canvas-wrap.zoomed img{max-width:none;max-height:none;cursor:zoom-out;}
+.corr-preview-card img{cursor:zoom-in;transition:box-shadow .15s;}
+.corr-preview-card img:hover{box-shadow:var(--shadow-md);}
